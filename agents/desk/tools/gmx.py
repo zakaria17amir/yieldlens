@@ -17,6 +17,7 @@ GMX_MARKETS = {
 
 
 async def fetch_gm_apr(market_name: str, settings: Settings, now: datetime) -> MarketSnapshot:
+    """The /apy endpoint carries no timestamp (the server caches ~30 min), so fetched_at is the age."""
     address = GMX_MARKETS.get(market_name)
     if address is None:
         raise DataUnavailable(market_name)

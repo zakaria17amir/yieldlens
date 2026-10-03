@@ -25,6 +25,7 @@
   "stale": false,
   "expired_fallback": false,
   "simulated": false,
+  "data_age_hours": 0.0,
   "history": [
    {
     "ts": "2025-12-03T00:00:00Z",

@@ -8,9 +8,7 @@ of the recorded Pendle history and are gated by MIN_CHANGE_BPS.
 import argparse
 import asyncio
 import csv
-import json
 import sys
-from datetime import datetime, timedelta
 from pathlib import Path
 
 import matplotlib
@@ -19,49 +17,14 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
 from desk.config import Settings  # noqa: E402
-from desk.evals_support import rule_target  # noqa: E402
-from desk.schemas import AprByPeriod, MarketSnapshot, PendlePoint, PendleSnapshot  # noqa: E402
+from desk.evals_support import load_points, rule_target, snapshots  # noqa: E402
+from desk.schemas import PendlePoint  # noqa: E402
 from desk.tools.stats import fix_vs_float_stats  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
-HISTORY = HERE.parent / "tests" / "fixtures" / "pendle_history.json"
 RESULTS = HERE / "results"
 LOOKBACK = 30
 START_VALUE = 100.0
-ADDRESS = "0x358925d171380e05b12036a2bf7051704cb85fab"
-
-
-def load_points(path: Path = HISTORY) -> list[PendlePoint]:
-    raw = json.loads(path.read_text(encoding="utf-8"))["results"]
-    return [
-        PendlePoint(
-            ts=datetime.fromisoformat(p["timestamp"]),
-            implied_apy_bps=round(p["impliedApy"] * 10_000),
-            underlying_apy_bps=round(p["underlyingApy"] * 10_000),
-        )
-        for p in raw
-    ]
-
-
-def snapshots(window: list[PendlePoint]) -> tuple[MarketSnapshot, PendleSnapshot]:
-    last, now = window[-1], window[-1].ts
-    gmx = MarketSnapshot(
-        market="ETH/USD [ETH-ETH]",
-        current_apr_bps=last.underlying_apy_bps,
-        apr_by_period=AprByPeriod(seven_d=last.underlying_apy_bps),
-        fetched_at=now,
-    )
-    pendle = PendleSnapshot(
-        market="gmETH (WETH-WETH)",
-        address=ADDRESS,
-        implied_apy_bps=last.implied_apy_bps,
-        underlying_apy_bps=last.underlying_apy_bps,
-        expiry=now + timedelta(days=120),
-        liquidity_usd=1_000_000.0,
-        fetched_at=now,
-        history=list(window),
-    )
-    return gmx, pendle
 
 
 def rule_decision(window: list[PendlePoint]) -> int:
@@ -102,7 +65,7 @@ def simulate(
             always_floating *= 1 + point.underlying_apy_bps / 10_000 / 365
         if i + 1 >= LOOKBACK and i % cadence_days == 0:
             target = decide(points[i + 1 - LOOKBACK : i + 1])
-            if abs(target - split) >= min_change_bps:
+            if abs(target - split) > min_change_bps:
                 value = fixed + floating
                 new_fixed = value * target / 10_000
                 added = new_fixed - fixed

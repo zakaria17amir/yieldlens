@@ -146,24 +146,30 @@ class Executor:
         cap_hit = False
 
         for user in self.list_delegated_users():
-            fixed_assets, floating_assets, policy, allowance_ok = self.user_state(user)
-            plan = plan_move(
-                fixed_assets,
-                floating_assets,
-                policy,
-                target_fixed_bps,
-                now,
-                allowance_ok,
-                user=user,
-                fixed_vault=self._fixed,
-                floating_vault=self._floating,
-            )
+            try:
+                fixed_assets, floating_assets, policy, allowance_ok = self.user_state(user)
+                plan = plan_move(
+                    fixed_assets,
+                    floating_assets,
+                    policy,
+                    target_fixed_bps,
+                    now,
+                    allowance_ok,
+                    user=user,
+                    fixed_vault=self._fixed,
+                    floating_vault=self._floating,
+                )
+            except Exception:
+                logger.exception("could not plan move for %s", user)
+                skipped.append(Skip(user=user, reason="tx_failed"))
+                continue
             if isinstance(plan, Skip):
                 skipped.append(plan)
                 continue
             if cap_hit:
                 skipped.append(Skip(user=user, reason="gas_cap"))
                 continue
+            tx_hash = None
             try:
                 call = self._router.functions.moveFor(
                     user, plan.from_vault, plan.to_vault, plan.assets, digest
@@ -184,7 +190,9 @@ class Executor:
                 tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
                 receipt = w3.eth.wait_for_transaction_receipt(tx_hash, timeout=60)
             except Exception:
-                logger.exception("moveFor failed for %s", user)
+                logger.exception(
+                    "moveFor failed for %s (tx %s)", user, _hex(tx_hash) if tx_hash else "not sent"
+                )
                 skipped.append(Skip(user=user, reason="tx_failed"))
                 continue
             gas_used += receipt["gasUsed"]

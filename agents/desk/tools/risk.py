@@ -3,6 +3,10 @@ from datetime import datetime, timedelta
 from desk.schemas import MarketSnapshot, PendleSnapshot, Verdict
 
 
+# Pendle history points are daily, so the newest point is up to a day old on a live market.
+HISTORY_GRANULARITY_HOURS = 24
+
+
 def freshness_errors(
     gmx: MarketSnapshot, pendle: PendleSnapshot, now: datetime, max_age_hours: int
 ) -> list[str]:
@@ -11,6 +15,13 @@ def freshness_errors(
     for name, snap in (("gmx", gmx), ("pendle", pendle)):
         if snap.stale or now - snap.fetched_at > limit:
             errors.append(f"{name} data is stale (older than {max_age_hours}h)")
+    history_limit = max_age_hours + HISTORY_GRANULARITY_HOURS
+    if (
+        not pendle.simulated
+        and pendle.data_age_hours > history_limit
+        and not any(e.startswith("pendle") for e in errors)
+    ):
+        errors.append(f"pendle history is stale (latest point older than {history_limit}h)")
     return errors
 
 

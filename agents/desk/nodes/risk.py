@@ -10,12 +10,22 @@ from pydantic import ValidationError
 from desk.config import Settings
 from desk.nodes.advocates import data_json
 from desk.prompts import load_prompt
-from desk.schemas import DeskAborted, Verdict
+from desk.schemas import Verdict
 from desk.state import DeskState
 from desk.tools.risk import enforce, expiry_blocks_fixed, freshness_errors
 
 
 logger = logging.getLogger(__name__)
+
+
+def _aborted_verdict(reason: str) -> Verdict:
+    return Verdict(
+        target_fixed_bps=0,
+        vetoed=True,
+        rationale=f"aborted: {reason}",
+        objections=[],
+        needs_rebuttal=False,
+    )
 
 
 def _drop_out_of_range_objections(verdict: Verdict, state: DeskState) -> Verdict:
@@ -35,6 +45,8 @@ def make_risk_officer(llm, settings: Settings, now: Callable[[], datetime]):
     template = load_prompt("risk")
 
     async def risk_officer(state: DeskState) -> dict:
+        if state.get("aborted"):
+            return {"verdict": _aborted_verdict("; ".join(state.get("errors", [])))}
         moment = now()
         freshness = freshness_errors(state["gmx"], state["pendle"], moment, settings.max_age_hours)
         blocked = expiry_blocks_fixed(state["pendle"], moment, settings.min_days_to_expiry)
@@ -57,12 +69,15 @@ def make_risk_officer(llm, settings: Settings, now: Callable[[], datetime]):
                 continue
             verdict = _drop_out_of_range_objections(verdict, state)
             return {"verdict": enforce(verdict, freshness, blocked)}
-        raise DeskAborted("risk_officer: unparseable output")
+        reason = "risk_officer: unparseable output"
+        return {"aborted": True, "errors": [reason], "verdict": _aborted_verdict(reason)}
 
     return risk_officer
 
 
 def route_after_risk(state: DeskState) -> str:
+    if state.get("aborted"):
+        return "reporter"
     if state["verdict"].needs_rebuttal and state.get("rebuttal_round", 0) == 0:
         return "advocates"
     return "executor"

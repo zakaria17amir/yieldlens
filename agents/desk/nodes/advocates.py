@@ -6,7 +6,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from pydantic import ValidationError
 
 from desk.prompts import load_prompt
-from desk.schemas import Case, DeskAborted
+from desk.schemas import Case
 from desk.state import DeskState
 from desk.tools.evidence import allowed_fields, invalid_citations
 
@@ -57,6 +57,6 @@ def make_advocate(position: Position, llm):
                 else:
                     return {case_key: case}
             messages = [*messages, HumanMessage(content=f"Invalid case: {problem}. Try again.")]
-        raise DeskAborted(f"{position}_advocate: {problem}")
+        return {"aborted": True, "errors": [f"{position}_advocate: {problem}"]}
 
     return advocate

@@ -36,6 +36,7 @@ def build_report(state: DeskState, now: datetime) -> DeskReport:
         rebuttal_round=state.get("rebuttal_round", 0),
         execution=state.get("execution"),
         errors=list(state.get("errors", [])),
+        dry_run=state.get("dry_run", False),
     )
     return report.model_copy(update={"report_hash": report_hash(report)})
 

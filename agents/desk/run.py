@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import json
 import logging
+import os
 import sys
 from collections.abc import Callable
 from datetime import UTC, datetime
@@ -36,15 +37,16 @@ logger = logging.getLogger("desk")
 
 class JsonFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
-        return json.dumps(
-            {
-                "ts": datetime.fromtimestamp(record.created, UTC).isoformat(),
-                "level": record.levelname,
-                "run_id": getattr(record, "run_id", None),
-                "node": getattr(record, "node", None),
-                "msg": record.getMessage(),
-            }
-        )
+        payload = {
+            "ts": datetime.fromtimestamp(record.created, UTC).isoformat(),
+            "level": record.levelname,
+            "run_id": getattr(record, "run_id", None),
+            "node": getattr(record, "node", None),
+            "msg": record.getMessage(),
+        }
+        if record.exc_info:
+            payload["exc_info"] = self.formatException(record.exc_info)
+        return json.dumps(payload)
 
 
 def configure_logging() -> None:
@@ -58,9 +60,9 @@ def configure_logging() -> None:
 
 
 class GatedExecutor:
-    """Skips execution when the new target is within min_change_bps of the previous run's.
+    """Skips execution when the new target differs from the last executed target by at most min_change_bps.
 
-    Known limitation: only targets are compared, not users' actual positions, so users who
+    `ran` is True once the inner executor was actually invoked. Known limitation: only targets are compared, not users' actual positions, so users who
     drifted or were skipped earlier are not rebalanced until the target moves.
     """
 
@@ -68,9 +70,10 @@ class GatedExecutor:
         self._inner = inner
         self._previous = previous_target
         self._min_change = min_change_bps
+        self.ran = False
 
     def execute(self, target_fixed_bps: int, report_hash: str) -> ExecutionReport:
-        if self._previous is not None and abs(target_fixed_bps - self._previous) < self._min_change:
+        if self._previous is not None and abs(target_fixed_bps - self._previous) <= self._min_change:
             list_users = getattr(self._inner, "list_delegated_users", None)
             users = list_users() if callable(list_users) else []
             return ExecutionReport(
@@ -78,11 +81,15 @@ class GatedExecutor:
                 skipped=[Skip(user=u, reason="below_min") for u in users],
                 gas_used=0,
             )
+        self.ran = True
         return self._inner.execute(target_fixed_bps, report_hash)
 
 
+EXECUTED_FILE = "latest_executed.json"
+
+
 def _previous_target(runs_dir: Path) -> int | None:
-    path = runs_dir / "latest.json"
+    path = runs_dir / EXECUTED_FILE
     if not path.exists():
         return None
     try:
@@ -93,6 +100,13 @@ def _previous_target(runs_dir: Path) -> int | None:
     if previous.verdict is None or previous.verdict.vetoed:
         return None
     return previous.verdict.target_fixed_bps
+
+
+def _write_executed(report: DeskReport, runs_dir: Path) -> None:
+    path = runs_dir / EXECUTED_FILE
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text(report.model_dump_json(by_alias=True, indent=2), encoding="utf-8", newline="\n")
+    os.replace(tmp, path)
 
 
 class _NodeEvents(AsyncCallbackHandler):
@@ -149,9 +163,13 @@ async def run_desk(
         settings=settings,
     )
     state = await graph.ainvoke(
-        {"run_id": run_id}, config={"callbacks": [_NodeEvents(run_id, on_event)]}
+        {"run_id": run_id, "dry_run": dry_run},
+        config={"callbacks": [_NodeEvents(run_id, on_event)]},
     )
-    return state["report"]
+    report = state["report"]
+    if gated.ran and not dry_run and report.verdict is not None and not report.verdict.vetoed:
+        _write_executed(report, Path(settings.runs_dir))
+    return report
 
 
 def main(argv: list[str] | None = None) -> None:

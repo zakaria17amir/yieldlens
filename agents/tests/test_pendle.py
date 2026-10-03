@@ -98,6 +98,7 @@ async def test_fetch_pendle_builds_history():
     assert snap.expiry == datetime(2026, 1, 29, tzinfo=UTC)
     assert snap.liquidity_usd == pytest.approx(43413.820237143336)
     assert snap.stale is False
+    assert snap.data_age_hours == pytest.approx((NOW - snap.history[-1].ts).total_seconds() / 3600)
     params = route.calls.last.request.url.params
     assert params["time_frame"] == "day"
     assert params["fields"] == "impliedApy,underlyingApy"

@@ -17,7 +17,11 @@ def _gmx(age_h: float = 0, stale: bool = False) -> MarketSnapshot:
 
 
 def _pendle(
-    age_h: float = 0, days_to_expiry: float = 60, expired_fallback: bool = False
+    age_h: float = 0,
+    days_to_expiry: float = 60,
+    expired_fallback: bool = False,
+    data_age_hours: float = 0.0,
+    simulated: bool = False,
 ) -> PendleSnapshot:
     return PendleSnapshot(
         market="p",
@@ -28,6 +32,8 @@ def _pendle(
         liquidity_usd=1.0,
         fetched_at=NOW - timedelta(hours=age_h),
         expired_fallback=expired_fallback,
+        data_age_hours=data_age_hours,
+        simulated=simulated,
         history=[],
     )
 
@@ -84,3 +90,20 @@ def test_enforce_is_noop_when_clean_and_does_not_mutate():
     assert out == original
     enforce(original, ["x"], True)
     assert original.vetoed is False and original.target_fixed_bps == 3000
+
+
+def test_stale_history_is_flagged():
+    errors = freshness_errors(_gmx(0), _pendle(data_age_hours=200), NOW, 12)
+    assert len(errors) == 1 and "history" in errors[0]
+
+
+def test_daily_granularity_is_tolerated():
+    assert freshness_errors(_gmx(0), _pendle(data_age_hours=30), NOW, 12) == []
+
+
+def test_simulated_market_bypasses_history_staleness():
+    assert freshness_errors(_gmx(0), _pendle(data_age_hours=5000, simulated=True), NOW, 12) == []
+
+
+def test_fresh_history_passes():
+    assert freshness_errors(_gmx(1), _pendle(1, data_age_hours=2), NOW, 12) == []

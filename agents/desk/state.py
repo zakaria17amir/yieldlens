@@ -19,7 +19,6 @@ class DeskState(TypedDict, total=False):
     gmx: MarketSnapshot | None
     pendle: PendleSnapshot | None
     stats: FixVsFloatStats | None
-    market_note: str | None
     fixed_case: Case | None
     float_case: Case | None
     verdict: Verdict | None
@@ -31,3 +30,5 @@ class DeskState(TypedDict, total=False):
     report_hash: str | None
     errors: Annotated[list[str], operator.add]
     created_at: datetime
+    aborted: bool
+    dry_run: bool

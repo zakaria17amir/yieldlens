@@ -2,7 +2,7 @@
 
 import json
 import tempfile
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -13,17 +13,65 @@ from desk.executor import NoopExecutor
 from desk.graph import build_graph
 from desk.llm import FakeLLM
 from desk.schemas import (
+    AprByPeriod,
     Argument,
     Case,
     DeskReport,
     MarketSnapshot,
+    PendlePoint,
     PendleSnapshot,
     Verdict,
 )
 from desk.tools.evidence import allowed_fields
 from desk.tools.stats import fix_vs_float_stats
 
+ADDRESS = "0x358925d171380e05b12036a2bf7051704cb85fab"
+HISTORY = Path(__file__).resolve().parent.parent / "tests" / "fixtures" / "pendle_history.json"
+
 BAND_RULE = "pct_days_float_beat_fixed >= 60 -> [0, 3000]; <= 40 -> [7000, 10000]; else [3000, 7000]"
+
+
+def load_points(path: Path = HISTORY) -> list[PendlePoint]:
+    raw = json.loads(path.read_text(encoding="utf-8"))["results"]
+    return [
+        PendlePoint(
+            ts=datetime.fromisoformat(p["timestamp"]),
+            implied_apy_bps=round(p["impliedApy"] * 10_000),
+            underlying_apy_bps=round(p["underlyingApy"] * 10_000),
+        )
+        for p in raw
+    ]
+
+
+def snapshots(
+    window: list[PendlePoint],
+    *,
+    now: datetime | None = None,
+    expiry: datetime | None = None,
+    gmx_age_hours: float = 0,
+    expired_fallback: bool = False,
+) -> tuple[MarketSnapshot, PendleSnapshot]:
+    last = window[-1]
+    now = now or last.ts
+    apr = last.underlying_apy_bps
+    gmx = MarketSnapshot(
+        market="ETH/USD [ETH-ETH]",
+        current_apr_bps=apr,
+        apr_by_period=AprByPeriod(one_d=apr, seven_d=apr, thirty_d=apr, ninety_d=apr),
+        fetched_at=now - timedelta(hours=gmx_age_hours),
+    )
+    pendle = PendleSnapshot(
+        market="gmETH (WETH-WETH)",
+        address=ADDRESS,
+        implied_apy_bps=last.implied_apy_bps,
+        underlying_apy_bps=last.underlying_apy_bps,
+        expiry=expiry or now + timedelta(days=120),
+        liquidity_usd=1_000_000.0,
+        fetched_at=now,
+        expired_fallback=expired_fallback,
+        history=list(window),
+    )
+    return gmx, pendle
 
 
 def band_for(pct: float) -> tuple[int, int]:

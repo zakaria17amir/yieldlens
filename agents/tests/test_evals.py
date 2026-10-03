@@ -11,15 +11,31 @@ GOLDEN_FILES = sorted(GOLDEN.glob("*.json"))
 
 
 def test_golden_files_validate():
-    assert len(GOLDEN_FILES) == 23
+    assert len(GOLDEN_FILES) == 30
     names = {p.stem for p in GOLDEN_FILES}
     assert {"stale_gmx", "expiring_market", "expired_fallback"} <= names
     assert sum(n.startswith("window_") for n in names) == 20
+    assert sum(n.startswith("float_win_") for n in names) == 4
+    assert sum(n.startswith("mid_band_") for n in names) == 3
     for path in GOLDEN_FILES:
         case = load_golden(path)
         lo, hi = case["expected_band"]
         assert 0 <= lo <= hi <= 10_000
         assert (CACHE / f"{path.stem}.json").exists()
+
+
+def test_golden_covers_all_three_bands():
+    bands = {
+        load_golden(p)["expected_band"]
+        for p in GOLDEN_FILES
+        if not load_golden(p)["expect_veto"]
+    }
+    assert {(0, 3000), (3000, 7000), (7000, 10000)} <= bands
+
+
+def test_rule_cache_prints_loud_warning(capsys, tmp_path):
+    main(["--mode", "cached", "--out", str(tmp_path / "latest.json")])
+    assert "RULE-MODE CACHE: plumbing check only" in capsys.readouterr().out
 
 
 def test_cache_files_are_labelled_and_load():
@@ -31,7 +47,7 @@ def test_cache_files_are_labelled_and_load():
 
 def test_run_evals_cached_passes_thresholds():
     results = asyncio.run(evaluate("cached"))
-    assert results["cases"] == 23
+    assert results["cases"] == 30
     assert passes(results)
     assert results["veto_accuracy"] == 1.0
     assert results["citation_validity_rate"] == 1.0

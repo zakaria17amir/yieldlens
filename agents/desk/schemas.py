@@ -47,6 +47,7 @@ class PendleSnapshot(BaseModel):
     stale: bool = False
     expired_fallback: bool = False
     simulated: bool = False
+    data_age_hours: float = 0.0
     history: list[PendlePoint]
 
 
@@ -123,6 +124,7 @@ class DeskReport(BaseModel):
     report_hash: str | None = None
     execution: ExecutionReport | None = None
     errors: list[str] = Field(default_factory=list)
+    dry_run: bool = False
 
 
 class DeskAborted(Exception):

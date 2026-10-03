@@ -33,6 +33,10 @@ HERE = Path(__file__).resolve().parent
 GOLDEN = HERE / "golden"
 CACHE = HERE / "cache"
 RESULTS = HERE / "results" / "latest.json"
+RULE_WARNING = (
+    "RULE-MODE CACHE: plumbing check only, not model evidence - "
+    "re-record with --mode live --record"
+)
 MIN_IN_BAND = 0.8
 MIN_VETO_ACCURACY = 1.0
 
@@ -117,6 +121,8 @@ def print_table(results: dict) -> None:
     for key in ("in_band_rate", "veto_accuracy", "citation_validity_rate", "mean_tokens", "mean_latency_s"):
         print(f"{key}: {results[key]:.3f}")
     print(f"recorded_with: {results['recorded_with']}")
+    if "rule" in results["recorded_with"]:
+        print(RULE_WARNING)
 
 
 def main(argv: list[str] | None = None) -> int:

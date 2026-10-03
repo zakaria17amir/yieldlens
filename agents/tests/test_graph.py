@@ -9,7 +9,6 @@ from desk.schemas import (
     AprByPeriod,
     Argument,
     Case,
-    DeskAborted,
     ExecutionReport,
     MarketSnapshot,
     Objection,
@@ -148,15 +147,43 @@ async def test_forced_decision_after_one_rebuttal(tmp_path):
     assert state["report"].rebuttal_round == 1
 
 
-async def test_invalid_citation_retries_then_aborts(tmp_path):
+async def test_abort_saves_report_with_errors(tmp_path):
     llm = FakeLLM().queue(
         _case("fixed", "stats.magic"), _case("fixed", "stats.magic"), _case("floating")
     )
     graph, executor = _run(tmp_path, llm)
-    with pytest.raises(DeskAborted):
-        await graph.ainvoke({"run_id": "run-4"})
+    state = await graph.ainvoke({"run_id": "run-4"})
+    report = state["report"]
     assert executor.calls == []
     assert _calls(llm, Verdict) == 0
+    assert report.execution is None
+    assert report.verdict.vetoed is True and report.verdict.target_fixed_bps == 0
+    assert report.verdict.rationale.startswith("aborted: fixed_advocate")
+    assert len(report.errors) == 1 and "fixed_advocate" in report.errors[0]
+    assert (tmp_path / "run-4.json").exists()
+
+
+async def test_risk_officer_parse_failures_abort_cleanly(tmp_path):
+    from langchain_core.exceptions import OutputParserException
+
+    class BrokenVerdictLLM(FakeLLM):
+        def with_structured_output(self, model, **kw):
+            inner = super().with_structured_output(model, **kw)
+
+            class W:
+                async def ainvoke(self, messages, *a, **k):
+                    if model is Verdict:
+                        raise OutputParserException("bad")
+                    return await inner.ainvoke(messages)
+
+            return W()
+
+    llm = BrokenVerdictLLM().queue(_case("fixed"), _case("floating"))
+    graph, executor = _run(tmp_path, llm)
+    state = await graph.ainvoke({"run_id": "run-4c"})
+    assert executor.calls == []
+    assert state["report"].errors == ["risk_officer: unparseable output"]
+    assert state["report"].verdict.vetoed is True
 
 
 async def test_invalid_citation_retry_can_recover(tmp_path):

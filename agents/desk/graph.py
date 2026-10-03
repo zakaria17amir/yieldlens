@@ -46,7 +46,7 @@ def build_graph(
     graph.add_conditional_edges(
         "risk_officer",
         route_after_risk,
-        {"advocates": "prepare_rebuttal", "executor": "executor"},
+        {"advocates": "prepare_rebuttal", "executor": "executor", "reporter": "reporter"},
     )
     graph.add_edge("prepare_rebuttal", "fixed_advocate")
     graph.add_edge("prepare_rebuttal", "float_advocate")

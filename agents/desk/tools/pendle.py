@@ -104,6 +104,7 @@ async def fetch_pendle(settings: Settings, now: datetime) -> PendleSnapshot:
         expiry = now + timedelta(days=90)
 
     fetched_at = now
+    data_age_hours = max(0.0, (now - history[-1].ts).total_seconds() / 3600)
     return PendleSnapshot(
         market=market["name"],
         address=market["address"],
@@ -115,5 +116,6 @@ async def fetch_pendle(settings: Settings, now: datetime) -> PendleSnapshot:
         stale=(now - fetched_at) > timedelta(hours=settings.max_age_hours),
         expired_fallback=expired_fallback,
         simulated=simulated,
+        data_age_hours=data_age_hours,
         history=history,
     )

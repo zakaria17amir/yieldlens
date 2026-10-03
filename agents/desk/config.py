@@ -1,11 +1,11 @@
 from typing import Literal
 
-from pydantic import SecretStr
+from pydantic import AliasChoices, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore", populate_by_name=True)
 
     anthropic_api_key: SecretStr | None = None
     openai_api_key: SecretStr | None = None
@@ -25,7 +25,9 @@ class Settings(BaseSettings):
     history_days: int = 90
     simulate_live_market: bool = False
 
-    rpc_url: str = "http://127.0.0.1:8545"
+    rpc_url: str = Field(
+        "http://127.0.0.1:8545", validation_alias=AliasChoices("ARBITRUM_SEPOLIA_RPC_URL", "RPC_URL")
+    )
     agent_private_key: SecretStr | None = None
     deployments_path: str = "../contracts/deployments/arbitrum-sepolia.json"
     runs_dir: str = "../api/data/runs"

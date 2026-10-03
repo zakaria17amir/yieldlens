@@ -1,11 +1,11 @@
 {
  "mode": "cached",
- "cases": 23,
+ "cases": 30,
  "in_band_rate": 1.0,
  "veto_accuracy": 1.0,
  "citation_validity_rate": 1.0,
  "mean_tokens": 0,
- "mean_latency_s": 0.017446726088604446,
+ "mean_latency_s": 0.016125743336548717,
  "recorded_with": [
   "rule"
  ],
@@ -18,7 +18,7 @@
    "in_band": true,
    "citations_valid": 4,
    "citations_total": 4,
-   "latency_s": 0.02996690000873059,
+   "latency_s": 0.029669600015040487,
    "recorded_with": "rule"
   },
   {
@@ -29,7 +29,84 @@
    "in_band": true,
    "citations_valid": 4,
    "citations_total": 4,
-   "latency_s": 0.016710399999283254,
+   "latency_s": 0.021091600006911904,
+   "recorded_with": "rule"
+  },
+  {
+   "name": "float_win_00",
+   "target_fixed_bps": 1500,
+   "vetoed": false,
+   "expect_veto": false,
+   "in_band": true,
+   "citations_valid": 4,
+   "citations_total": 4,
+   "latency_s": 0.015012899995781481,
+   "recorded_with": "rule"
+  },
+  {
+   "name": "float_win_01",
+   "target_fixed_bps": 1500,
+   "vetoed": false,
+   "expect_veto": false,
+   "in_band": true,
+   "citations_valid": 4,
+   "citations_total": 4,
+   "latency_s": 0.015717599977506325,
+   "recorded_with": "rule"
+  },
+  {
+   "name": "float_win_02",
+   "target_fixed_bps": 1500,
+   "vetoed": false,
+   "expect_veto": false,
+   "in_band": true,
+   "citations_valid": 4,
+   "citations_total": 4,
+   "latency_s": 0.01582780000171624,
+   "recorded_with": "rule"
+  },
+  {
+   "name": "float_win_03",
+   "target_fixed_bps": 1500,
+   "vetoed": false,
+   "expect_veto": false,
+   "in_band": true,
+   "citations_valid": 4,
+   "citations_total": 4,
+   "latency_s": 0.01685939999879338,
+   "recorded_with": "rule"
+  },
+  {
+   "name": "mid_band_00",
+   "target_fixed_bps": 5000,
+   "vetoed": false,
+   "expect_veto": false,
+   "in_band": true,
+   "citations_valid": 4,
+   "citations_total": 4,
+   "latency_s": 0.01597170002060011,
+   "recorded_with": "rule"
+  },
+  {
+   "name": "mid_band_01",
+   "target_fixed_bps": 5000,
+   "vetoed": false,
+   "expect_veto": false,
+   "in_band": true,
+   "citations_valid": 4,
+   "citations_total": 4,
+   "latency_s": 0.015421699994476512,
+   "recorded_with": "rule"
+  },
+  {
+   "name": "mid_band_02",
+   "target_fixed_bps": 5000,
+   "vetoed": false,
+   "expect_veto": false,
+   "in_band": true,
+   "citations_valid": 4,
+   "citations_total": 4,
+   "latency_s": 0.016212299990002066,
    "recorded_with": "rule"
   },
   {
@@ -40,7 +117,7 @@
    "in_band": true,
    "citations_valid": 4,
    "citations_total": 4,
-   "latency_s": 0.0165804999996908,
+   "latency_s": 0.014471599977696314,
    "recorded_with": "rule"
   },
   {
@@ -51,7 +128,7 @@
    "in_band": true,
    "citations_valid": 4,
    "citations_total": 4,
-   "latency_s": 0.017184299998916686,
+   "latency_s": 0.014507200015941635,
    "recorded_with": "rule"
   },
   {
@@ -62,7 +139,7 @@
    "in_band": true,
    "citations_valid": 4,
    "citations_total": 4,
-   "latency_s": 0.01793309999629855,
+   "latency_s": 0.01676309999311343,
    "recorded_with": "rule"
   },
   {
@@ -73,7 +150,7 @@
    "in_band": true,
    "citations_valid": 4,
    "citations_total": 4,
-   "latency_s": 0.01664570000139065,
+   "latency_s": 0.015250399999786168,
    "recorded_with": "rule"
   },
   {
@@ -84,7 +161,7 @@
    "in_band": true,
    "citations_valid": 4,
    "citations_total": 4,
-   "latency_s": 0.01548719999846071,
+   "latency_s": 0.015465700009372085,
    "recorded_with": "rule"
   },
   {
@@ -95,7 +172,7 @@
    "in_band": true,
    "citations_valid": 4,
    "citations_total": 4,
-   "latency_s": 0.01652740000281483,
+   "latency_s": 0.015516999992541969,
    "recorded_with": "rule"
   },
   {
@@ -106,7 +183,7 @@
    "in_band": true,
    "citations_valid": 4,
    "citations_total": 4,
-   "latency_s": 0.015901800012215972,
+   "latency_s": 0.01660590001847595,
    "recorded_with": "rule"
   },
   {
@@ -117,7 +194,7 @@
    "in_band": true,
    "citations_valid": 4,
    "citations_total": 4,
-   "latency_s": 0.016483900020830333,
+   "latency_s": 0.015776800020830706,
    "recorded_with": "rule"
   },
   {
@@ -128,7 +205,7 @@
    "in_band": true,
    "citations_valid": 4,
    "citations_total": 4,
-   "latency_s": 0.017198799992911518,
+   "latency_s": 0.01568599999882281,
    "recorded_with": "rule"
   },
   {
@@ -139,7 +216,7 @@
    "in_band": true,
    "citations_valid": 4,
    "citations_total": 4,
-   "latency_s": 0.018143199995392933,
+   "latency_s": 0.015033000003313646,
    "recorded_with": "rule"
   },
   {
@@ -150,7 +227,7 @@
    "in_band": true,
    "citations_valid": 4,
    "citations_total": 4,
-   "latency_s": 0.01637629998731427,
+   "latency_s": 0.015309700014768168,
    "recorded_with": "rule"
   },
   {
@@ -161,7 +238,7 @@
    "in_band": true,
    "citations_valid": 4,
    "citations_total": 4,
-   "latency_s": 0.017199399997480214,
+   "latency_s": 0.015814100013813004,
    "recorded_with": "rule"
   },
   {
@@ -172,7 +249,7 @@
    "in_band": true,
    "citations_valid": 4,
    "citations_total": 4,
-   "latency_s": 0.017450900020776317,
+   "latency_s": 0.015978500014171004,
    "recorded_with": "rule"
   },
   {
@@ -183,7 +260,7 @@
    "in_band": true,
    "citations_valid": 4,
    "citations_total": 4,
-   "latency_s": 0.01713789999485016,
+   "latency_s": 0.014680499996757135,
    "recorded_with": "rule"
   },
   {
@@ -194,7 +271,7 @@
    "in_band": true,
    "citations_valid": 4,
    "citations_total": 4,
-   "latency_s": 0.017483300005551428,
+   "latency_s": 0.01554500000202097,
    "recorded_with": "rule"
   },
   {
@@ -205,7 +282,7 @@
    "in_band": true,
    "citations_valid": 4,
    "citations_total": 4,
-   "latency_s": 0.015981200005626306,
+   "latency_s": 0.015138099988689646,
    "recorded_with": "rule"
   },
   {
@@ -216,7 +293,7 @@
    "in_band": true,
    "citations_valid": 4,
    "citations_total": 4,
-   "latency_s": 0.017218199995113537,
+   "latency_s": 0.014702900021802634,
    "recorded_with": "rule"
   },
   {
@@ -227,7 +304,7 @@
    "in_band": true,
    "citations_valid": 4,
    "citations_total": 4,
-   "latency_s": 0.016290700004901737,
+   "latency_s": 0.014986700000008568,
    "recorded_with": "rule"
   },
   {
@@ -238,7 +315,7 @@
    "in_band": true,
    "citations_valid": 4,
    "citations_total": 4,
-   "latency_s": 0.016731099982280284,
+   "latency_s": 0.015039299993077293,
    "recorded_with": "rule"
   },
   {
@@ -249,7 +326,7 @@
    "in_band": true,
    "citations_valid": 4,
    "citations_total": 4,
-   "latency_s": 0.017751400009728968,
+   "latency_s": 0.015057400014484301,
    "recorded_with": "rule"
   },
   {
@@ -260,7 +337,7 @@
    "in_band": true,
    "citations_valid": 4,
    "citations_total": 4,
-   "latency_s": 0.016891100007342175,
+   "latency_s": 0.014658800006145611,
    "recorded_with": "rule"
   }
  ]

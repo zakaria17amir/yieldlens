@@ -170,3 +170,77 @@ def test_execute_stops_at_gas_cap(world):
     assert sorted(s.user for s in report.skipped) == sorted(users)
     assert {s.reason for s in report.skipped} == {"gas_cap"}
     assert world.agent_nonce() == nonce
+
+
+class _FakeCall:
+    def estimate_gas(self, tx):
+        return 100
+
+    def build_transaction(self, tx):
+        return {"nonce": 0, **tx}
+
+
+class _FakeEth:
+    def __init__(self, receipt_error=None):
+        self.receipt_error = receipt_error
+        self.sent = 0
+        self.account = type(
+            "Acc", (), {"sign_transaction": staticmethod(lambda tx, key: type("S", (), {"raw_transaction": b"raw"})())}
+        )()
+
+    def get_block(self, _):
+        return {"timestamp": 1000}
+
+    def get_transaction_count(self, *_):
+        return 0
+
+    def send_raw_transaction(self, raw):
+        self.sent += 1
+        return b"\x01" * 32
+
+    def wait_for_transaction_receipt(self, tx_hash, timeout):
+        if self.receipt_error:
+            raise self.receipt_error
+        return {"gasUsed": 50, "status": 1}
+
+
+def _fake_executor(users, states, eth):
+    executor = Executor.__new__(Executor)
+    executor._w3 = type("W3", (), {"eth": eth})()
+    executor._agent = "0xagent"
+    executor._key = "0xkey"
+    executor._max_gas = 10_000
+    executor._fixed = FIXED
+    executor._floating = FLOATING
+    executor._router = type(
+        "R", (), {"functions": type("F", (), {"moveFor": staticmethod(lambda *a: _FakeCall())})()}
+    )()
+    executor.list_delegated_users = lambda: users
+
+    def user_state(user):
+        state = states[user]
+        if isinstance(state, Exception):
+            raise state
+        return state
+
+    executor.user_state = user_state
+    return executor
+
+
+def test_execute_continues_after_per_user_failure():
+    good = (0, 100, Policy(True, 10_000, 0, 0), True)
+    executor = _fake_executor(["0xbad", "0xgood"], {"0xbad": RuntimeError("rpc down"), "0xgood": good}, _FakeEth())
+    report = executor.execute(10_000, HASH)
+    assert [(s.user, s.reason) for s in report.skipped] == [("0xbad", "tx_failed")]
+    assert [m.user for m in report.moves] == ["0xgood"]
+    assert report.gas_used == 50
+
+
+def test_execute_receipt_timeout_is_tx_failed_and_loop_continues():
+    good = (0, 100, Policy(True, 10_000, 0, 0), True)
+    eth = _FakeEth(receipt_error=TimeoutError("receipt"))
+    executor = _fake_executor(["0xa", "0xb"], {"0xa": good, "0xb": good}, eth)
+    report = executor.execute(10_000, HASH)
+    assert report.moves == []
+    assert [(s.user, s.reason) for s in report.skipped] == [("0xa", "tx_failed"), ("0xb", "tx_failed")]
+    assert eth.sent == 2

@@ -52,6 +52,7 @@ def anvil():
         accounts = w3.eth.accounts
         env = {**os.environ, "DEPLOYER_PRIVATE_KEY": DEPLOYER_KEY, "AGENT_ADDRESS": accounts[1]}
         deployments_file = contracts / "deployments" / "arbitrum-sepolia.json"
+        backup = deployments_file.read_bytes() if deployments_file.exists() else None
         try:
             try:
                 subprocess.run(
@@ -73,7 +74,10 @@ def anvil():
                 for name in CONTRACT_NAMES
             }
         finally:
-            deployments_file.unlink(missing_ok=True)
+            if backup is None:
+                deployments_file.unlink(missing_ok=True)
+            else:
+                deployments_file.write_bytes(backup)
             shutil.rmtree(contracts / "broadcast", ignore_errors=True)
 
         yield {
@@ -88,6 +92,10 @@ def anvil():
     finally:
         if process is not None:
             process.terminate()
+            try:
+                process.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                process.kill()
 
 
 @pytest.fixture
