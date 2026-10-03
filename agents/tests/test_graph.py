@@ -200,3 +200,53 @@ async def test_expired_market_forces_zero_fixed(tmp_path):
     state = await graph.ainvoke({"run_id": "run-7"})
     assert state["report"].verdict.target_fixed_bps == 0
     assert executor.calls[0][0] == 0
+
+
+class _RaisingLLM(FakeLLM):
+    """First Case call raises a parse error, then falls back to the queue."""
+
+    def __init__(self, error: Exception):
+        super().__init__()
+        self.error = error
+        self.raised = False
+
+    def with_structured_output(self, model, **kw):
+        inner = super().with_structured_output(model, **kw)
+        outer = self
+
+        class Wrapper:
+            async def ainvoke(self, messages, *a, **k):
+                if model is Case and "fixed advocate" in str(messages[0].content) and not outer.raised:
+                    outer.raised = True
+                    raise outer.error
+                return await inner.ainvoke(messages)
+
+        return Wrapper()
+
+
+async def test_parse_error_counts_as_retry_then_recovers(tmp_path):
+    from langchain_core.exceptions import OutputParserException
+
+    llm = _RaisingLLM(OutputParserException("bad json"))
+    llm.queue(_case("fixed"), _case("floating"), _verdict(3000))
+    graph, executor = _run(tmp_path, llm)
+    await graph.ainvoke({"run_id": "run-8"})
+    assert len(executor.calls) == 1
+
+
+async def test_out_of_range_objections_are_dropped(tmp_path):
+    verdict = Verdict(
+        target_fixed_bps=3000,
+        vetoed=False,
+        rationale="r",
+        objections=[
+            Objection(to="fixed", argument_idx=0, reason="ok"),
+            Objection(to="fixed", argument_idx=5, reason="out of range"),
+            Objection(to="floating", argument_idx=-1, reason="negative"),
+        ],
+        needs_rebuttal=False,
+    )
+    llm = FakeLLM().queue(_case("fixed"), _case("floating"), verdict)
+    graph, _ = _run(tmp_path, llm)
+    state = await graph.ainvoke({"run_id": "run-9"})
+    assert [o.reason for o in state["report"].verdict.objections] == ["ok"]

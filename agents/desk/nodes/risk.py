@@ -1,15 +1,33 @@
 import json
+import logging
 from collections.abc import Callable
 from datetime import datetime
 
+from langchain_core.exceptions import OutputParserException
 from langchain_core.messages import HumanMessage, SystemMessage
+from pydantic import ValidationError
 
 from desk.config import Settings
 from desk.nodes.advocates import data_json
 from desk.prompts import load_prompt
-from desk.schemas import Verdict
+from desk.schemas import DeskAborted, Verdict
 from desk.state import DeskState
 from desk.tools.risk import enforce, expiry_blocks_fixed, freshness_errors
+
+
+logger = logging.getLogger(__name__)
+
+
+def _drop_out_of_range_objections(verdict: Verdict, state: DeskState) -> Verdict:
+    sizes = {
+        "fixed": len(state["fixed_case"].arguments),
+        "floating": len(state["float_case"].arguments),
+    }
+    kept = [o for o in verdict.objections if 0 <= o.argument_idx < sizes[o.to]]
+    if len(kept) != len(verdict.objections):
+        logger.warning("dropped %d out-of-range objections", len(verdict.objections) - len(kept))
+        return verdict.model_copy(update={"objections": kept})
+    return verdict
 
 
 def make_risk_officer(llm, settings: Settings, now: Callable[[], datetime]):
@@ -30,10 +48,16 @@ def make_risk_officer(llm, settings: Settings, now: Callable[[], datetime]):
             cases_json=json.dumps(cases, sort_keys=True),
             data_json=data_json(state),
         )
-        verdict = await structured.ainvoke(
-            [SystemMessage(content=system), HumanMessage(content="Give your verdict.")]
-        )
-        return {"verdict": enforce(verdict, freshness, blocked)}
+        messages = [SystemMessage(content=system), HumanMessage(content="Give your verdict.")]
+        for _ in range(2):
+            try:
+                verdict = await structured.ainvoke(messages)
+            except (ValidationError, OutputParserException) as exc:
+                logger.warning("risk_officer output unparseable: %s", type(exc).__name__)
+                continue
+            verdict = _drop_out_of_range_objections(verdict, state)
+            return {"verdict": enforce(verdict, freshness, blocked)}
+        raise DeskAborted("risk_officer: unparseable output")
 
     return risk_officer
 

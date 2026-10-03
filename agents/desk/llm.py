@@ -8,15 +8,16 @@ from desk.config import Settings
 
 def make_llm(tier: Literal["small", "large"], settings: Settings) -> BaseChatModel:
     model = settings.model_small if tier == "small" else settings.model_large
+    secret = settings.openai_api_key if settings.llm_provider == "openai" else settings.anthropic_api_key
+    if secret is None:
+        raise RuntimeError(f"missing API key for provider {settings.llm_provider}")
     if settings.llm_provider == "openai":
         from langchain_openai import ChatOpenAI
 
-        key = settings.openai_api_key.get_secret_value() if settings.openai_api_key else None
-        return ChatOpenAI(model=model, temperature=0, api_key=key)
+        return ChatOpenAI(model=model, temperature=0, api_key=secret)
     from langchain_anthropic import ChatAnthropic
 
-    key = settings.anthropic_api_key.get_secret_value() if settings.anthropic_api_key else None
-    return ChatAnthropic(model=model, temperature=0, api_key=key)
+    return ChatAnthropic(model=model, temperature=0, api_key=secret)
 
 
 class _FakeStructured:

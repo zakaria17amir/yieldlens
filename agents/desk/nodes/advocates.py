@@ -1,7 +1,9 @@
 import json
 from typing import Literal
 
+from langchain_core.exceptions import OutputParserException
 from langchain_core.messages import HumanMessage, SystemMessage
+from pydantic import ValidationError
 
 from desk.prompts import load_prompt
 from desk.schemas import Case, DeskAborted
@@ -42,13 +44,18 @@ def make_advocate(position: Position, llm):
         ]
         problem = ""
         for _ in range(2):
-            case = await structured.ainvoke(messages)
-            if case.position != position:
-                problem = f"position must be {position!r}"
-            elif bad := invalid_citations(case, allowed):
-                problem = f"arguments {bad} cite fields that do not exist"
+            problem = ""
+            try:
+                case = await structured.ainvoke(messages)
+            except (ValidationError, OutputParserException) as exc:
+                problem = f"unparseable output ({type(exc).__name__})"
             else:
-                return {case_key: case}
+                if case.position != position:
+                    problem = f"position must be {position!r}"
+                elif bad := invalid_citations(case, allowed):
+                    problem = f"arguments {bad} cite fields that do not exist"
+                else:
+                    return {case_key: case}
             messages = [*messages, HumanMessage(content=f"Invalid case: {problem}. Try again.")]
         raise DeskAborted(f"{position}_advocate: {problem}")
 
