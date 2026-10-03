@@ -1,0 +1,12 @@
+contracts/out
+contracts/cache
+contracts/lib/**/.git
+.env
+**/__pycache__
+agents/.venv
+api/.venv
+api/data/runs/*.json
+!api/data/runs/.gitkeep
+web/node_modules
+web/dist
+.superpowers/
