@@ -23,6 +23,7 @@ packages = ["desk"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+addopts = "-m \"not live and not anvil\""
 asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 markers = [
