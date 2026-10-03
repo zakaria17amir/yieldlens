@@ -1,7 +1,16 @@
-from datetime import datetime
-from typing import Literal
+from datetime import UTC, datetime
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field
+
+
+def _to_utc(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        return value.replace(tzinfo=UTC)
+    return value.astimezone(UTC)
+
+
+UtcDatetime = Annotated[datetime, AfterValidator(_to_utc)]
 
 
 class AprByPeriod(BaseModel):
@@ -17,12 +26,12 @@ class MarketSnapshot(BaseModel):
     market: str
     current_apr_bps: int
     apr_by_period: AprByPeriod
-    fetched_at: datetime
+    fetched_at: UtcDatetime
     stale: bool = False
 
 
 class PendlePoint(BaseModel):
-    ts: datetime
+    ts: UtcDatetime
     implied_apy_bps: int
     underlying_apy_bps: int
 
@@ -32,11 +41,12 @@ class PendleSnapshot(BaseModel):
     address: str
     implied_apy_bps: int
     underlying_apy_bps: int
-    expiry: datetime
+    expiry: UtcDatetime
     liquidity_usd: float
-    fetched_at: datetime
+    fetched_at: UtcDatetime
     stale: bool = False
     expired_fallback: bool = False
+    simulated: bool = False
     history: list[PendlePoint]
 
 
@@ -102,7 +112,7 @@ class ExecutionReport(BaseModel):
 
 class DeskReport(BaseModel):
     run_id: str
-    created_at: datetime
+    created_at: UtcDatetime
     gmx: MarketSnapshot | None = None
     pendle: PendleSnapshot | None = None
     stats: FixVsFloatStats | None = None

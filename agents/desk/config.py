@@ -17,12 +17,13 @@ class Settings(BaseSettings):
     pendle_api_url: str = "https://api-v2.pendle.finance/core"
     pendle_chain_id: int = 42161
     pendle_market_address: str | None = None
-    gmx_market_name: str = "GM: ETH/USD [WETH-USDC]"
+    gmx_market_name: str = "ETH/USD [ETH-ETH]"
 
     max_age_hours: int = 12
     min_days_to_expiry: int = 14
     min_change_bps: int = 500
     history_days: int = 90
+    simulate_live_market: bool = False
 
     rpc_url: str = "http://127.0.0.1:8545"
     agent_private_key: SecretStr | None = None

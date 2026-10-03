@@ -20,6 +20,7 @@ import respx
 from desk.config import Settings
 from desk.tools.http import DataUnavailable
 from desk.tools.pendle import discover_gm_market, fetch_pendle
+from desk.tools.risk import expiry_blocks_fixed
 
 FIXTURES = Path(__file__).parent / "fixtures"
 NOW = datetime(2026, 10, 3, 12, 0, tzinfo=UTC)
@@ -115,3 +116,43 @@ async def test_fetch_pendle_empty_history_raises():
 async def test_fetch_pendle_live():
     snap = await fetch_pendle(Settings(), datetime.now(UTC))
     assert snap.history
+
+
+@respx.mock
+async def test_simulate_live_market_relabels_expired():
+    _serve_markets(_markets())
+    respx.get(HISTORY_URL).mock(return_value=httpx.Response(200, json=_history()))
+    snap = await fetch_pendle(Settings(simulate_live_market=True), NOW)
+    assert snap.simulated is True
+    assert snap.expired_fallback is False
+    assert snap.expiry == NOW + timedelta(days=90)
+    assert expiry_blocks_fixed(snap, NOW, 14) is False
+    assert len(snap.history) == len(_history()["results"])
+
+
+@respx.mock
+async def test_simulate_flag_off_keeps_expired_fallback():
+    _serve_markets(_markets())
+    respx.get(HISTORY_URL).mock(return_value=httpx.Response(200, json=_history()))
+    snap = await fetch_pendle(Settings(), NOW)
+    assert snap.simulated is False
+    assert expiry_blocks_fixed(snap, NOW, 14) is True
+
+
+@respx.mock
+async def test_discover_matches_underlying_symbol():
+    payload = _markets()
+    payload["results"] = [m for m in payload["results"] if not m["name"].lower().startswith("gm")]
+    payload["results"][0]["underlyingAsset"] = {"symbol": "GM-ETH"}
+    _serve_markets(payload)
+    market, _ = await discover_gm_market(Settings(), NOW)
+    assert market["address"] == payload["results"][0]["address"]
+
+
+@respx.mock
+async def test_discover_malformed_record_raises_data_unavailable():
+    payload = _markets()
+    del payload["results"][0]["expiry"]
+    _serve_markets(payload)
+    with pytest.raises(DataUnavailable):
+        await discover_gm_market(Settings(), NOW)

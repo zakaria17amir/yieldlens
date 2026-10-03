@@ -67,3 +67,10 @@ def test_invalid_citations_flags_made_up_fields():
         ],
     )
     assert invalid_citations(case, allowed) == [0]
+
+
+def test_allowed_fields_excludes_none_leaves():
+    stats, gmx, pendle = _inputs()
+    allowed = allowed_fields(stats, gmx, pendle)
+    assert "gmx.apr_by_period.7d" in allowed
+    assert "gmx.apr_by_period.30d" not in allowed

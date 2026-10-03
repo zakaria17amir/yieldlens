@@ -77,3 +77,12 @@ async def test_fetch_gm_apr_http_error_raises():
 async def test_fetch_gm_apr_live():
     snap = await fetch_gm_apr(NAME, Settings(), datetime.now(UTC))
     assert snap.current_apr_bps >= 0
+
+
+@respx.mock
+async def test_default_market_name_resolves():
+    settings = Settings()
+    _mock_all(settings)
+    snap = await fetch_gm_apr(settings.gmx_market_name, settings, NOW)
+    expected = round(_fixture("7d")["markets"][GMX_MARKETS[settings.gmx_market_name]]["apy"] * 10_000)
+    assert snap.current_apr_bps == expected

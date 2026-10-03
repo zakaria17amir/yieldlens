@@ -38,6 +38,19 @@ async def discover_gm_market(settings: Settings, now: datetime) -> tuple[dict, b
         markets = await _all_markets(settings)
     except (httpx.HTTPError, ValueError, KeyError) as exc:
         raise DataUnavailable("pendle-gm") from exc
+    try:
+        return _select(markets, settings, now)
+    except (KeyError, TypeError, ValueError, AttributeError) as exc:
+        raise DataUnavailable("pendle-gm") from exc
+
+
+def _is_gm(market: dict) -> bool:
+    underlying = market.get("underlyingAsset")
+    symbol = underlying.get("symbol", "") if isinstance(underlying, dict) else ""
+    return market["name"].lower().startswith("gm") or symbol.lower().startswith("gm")
+
+
+def _select(markets: list[dict], settings: Settings, now: datetime) -> tuple[dict, bool]:
     markets = [m for m in markets if m.get("chainId") == settings.pendle_chain_id]
 
     if settings.pendle_market_address:
@@ -47,7 +60,7 @@ async def discover_gm_market(settings: Settings, now: datetime) -> tuple[dict, b
                 return market, _parse_ts(market["expiry"]) <= now
         raise DataUnavailable("pendle-gm")
 
-    gm = [m for m in markets if m["name"].lower().startswith("gm")]
+    gm = [m for m in markets if _is_gm(m)]
     live = [m for m in gm if _parse_ts(m["expiry"]) > now]
     if live:
         return max(live, key=lambda m: _parse_ts(m["expiry"])), False
@@ -85,6 +98,11 @@ async def fetch_pendle(settings: Settings, now: datetime) -> PendleSnapshot:
     if not history:
         raise DataUnavailable("pendle-history")
 
+    simulated = settings.simulate_live_market and expired_fallback
+    if simulated:
+        expired_fallback = False
+        expiry = now + timedelta(days=90)
+
     fetched_at = now
     return PendleSnapshot(
         market=market["name"],
@@ -96,5 +114,6 @@ async def fetch_pendle(settings: Settings, now: datetime) -> PendleSnapshot:
         fetched_at=fetched_at,
         stale=(now - fetched_at) > timedelta(hours=settings.max_age_hours),
         expired_fallback=expired_fallback,
+        simulated=simulated,
         history=history,
     )

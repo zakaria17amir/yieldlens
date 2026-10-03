@@ -14,7 +14,7 @@ def _leaves(prefix: str, value: Any) -> set[str]:
         return out
     if isinstance(value, list):
         return set()
-    return {prefix}
+    return set() if value is None else {prefix}
 
 
 def allowed_fields(

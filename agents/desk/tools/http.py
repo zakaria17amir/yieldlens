@@ -21,6 +21,13 @@ def _get_client() -> httpx.AsyncClient:
     return _client
 
 
+async def aclose() -> None:
+    global _client, _client_loop
+    client, _client, _client_loop = _client, None, None
+    if client is not None:
+        await client.aclose()
+
+
 async def get_json(url: str, params: dict | None = None, timeout: float = 20) -> Any:
     response = await _get_client().get(url, params=params, timeout=timeout)
     response.raise_for_status()

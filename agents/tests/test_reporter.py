@@ -154,3 +154,15 @@ def test_save_writes_run_and_latest(tmp_path: Path):
 def test_new_run_id_format():
     run_id = new_run_id(NOW)
     assert re.fullmatch(r"2026-10-03T12-00-00Z-[0-9a-f]{4}", run_id)
+
+
+def test_hash_normalises_timezones_to_utc():
+    from datetime import timedelta, timezone
+
+    plus5 = timezone(timedelta(hours=5))
+    state = _state()
+    shifted = _state()
+    shifted["gmx"] = shifted["gmx"].model_copy(update={"fetched_at": NOW.astimezone(plus5)})
+    shifted_report = build_report(shifted, NOW.astimezone(plus5))
+    assert shifted_report.created_at.utcoffset() == timedelta(0)
+    assert report_hash(shifted_report) == report_hash(build_report(state, NOW))

@@ -11,7 +11,8 @@ from desk.state import DeskState
 
 
 def canonical_json(report: DeskReport) -> str:
-    data = report.model_dump(mode="json", by_alias=True)
+    normalised = DeskReport.model_validate_json(report.model_dump_json(by_alias=True))
+    data = normalised.model_dump(mode="json", by_alias=True)
     data["execution"] = None
     data["report_hash"] = None
     return json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False)

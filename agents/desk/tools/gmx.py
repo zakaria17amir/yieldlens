@@ -11,6 +11,7 @@ PERIODS = ("1d", "7d", "30d", "90d")
 
 # The /apy endpoint keys markets by address only; names come from /markets.
 GMX_MARKETS = {
+    "ETH/USD [ETH-ETH]": "0x450bb6774Dd8a756274E0ab4107953259d2ac541",
     "GM: ETH/USD [WETH-USDC]": "0x70d95587d40A2caf56bd97485aB3Eec10Bee6336",
 }
 
