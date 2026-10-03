@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import secrets
+import threading
 from collections.abc import AsyncIterator, Awaitable, Callable
 from datetime import UTC, datetime
 
@@ -9,6 +10,7 @@ from app.store import ReportStore
 Runner = Callable[[str, Callable[[dict], None]], Awaitable[dict]]
 
 TERMINAL = ("done", "error")
+MAX_RUNS = 20
 PHASE_EVENTS = {"start": "node_start", "end": "node_end"}
 
 logger = logging.getLogger(__name__)
@@ -31,6 +33,8 @@ class RunManager:
         self._buffers: dict[str, list[dict]] = {}
         self._subscribers: dict[str, list[asyncio.Queue]] = {}
         self._tasks: set[asyncio.Task] = set()
+        self._loop: asyncio.AbstractEventLoop | None = None
+        self._loop_thread: int | None = None
 
     @property
     def active_run_id(self) -> str | None:
@@ -44,6 +48,9 @@ class RunManager:
             if self._active is not None:
                 raise RunActive()
             run_id = new_run_id()
+            self._loop = asyncio.get_running_loop()
+            self._loop_thread = threading.get_ident()
+            self._evict_old_runs()
             self._active = run_id
             self._buffers[run_id] = []
             self._subscribers[run_id] = []
@@ -51,6 +58,12 @@ class RunManager:
             self._tasks.add(task)
             task.add_done_callback(self._tasks.discard)
             return run_id
+
+    def _evict_old_runs(self) -> None:
+        while len(self._buffers) >= MAX_RUNS:
+            oldest = next(iter(self._buffers))
+            del self._buffers[oldest]
+            self._subscribers.pop(oldest, None)
 
     def _emit(self, run_id: str, name: str, data: dict) -> None:
         event = {"event": name, "data": data}
@@ -60,14 +73,18 @@ class RunManager:
 
     def _on_runner_event(self, run_id: str, raw: dict) -> None:
         name = PHASE_EVENTS.get(raw.get("phase"))
-        if name:
+        if not name:
+            return
+        if threading.get_ident() == self._loop_thread:
             self._emit(run_id, name, raw)
+        else:
+            self._loop.call_soon_threadsafe(self._emit, run_id, name, raw)
 
     async def _run(self, run_id: str) -> None:
         try:
             report = await self._runner(run_id, lambda raw: self._on_runner_event(run_id, raw))
             if self._store is not None and isinstance(report, dict):
-                self._store.save(report)
+                await asyncio.to_thread(self._store.save, report)
         except Exception as exc:
             logger.exception("desk run %s failed", run_id)
             self._active = None

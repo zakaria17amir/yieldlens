@@ -1,5 +1,4 @@
 import json
-import os
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -26,7 +25,7 @@ def default_runner(runs_dir: Path) -> Runner:
         from desk.config import Settings
         from desk.run import run_desk
 
-        settings = Settings().model_copy(update={"runs_dir": str(runs_dir)})
+        settings = Settings().model_copy(update={"runs_dir": str(runs_dir.resolve())})
         report = await run_desk(settings, run_id=run_id, on_event=on_event)
         return report.model_dump(mode="json", by_alias=True)
 
@@ -41,8 +40,8 @@ def create_app(runner: Runner | None = None, runs_dir: Path | None = None) -> Fa
 
     app = FastAPI(title="YieldLens desk API")
     origins = [LOCAL_WEB_ORIGIN]
-    if settings.web_origin or os.environ.get("WEB_ORIGIN"):
-        origins.append(settings.web_origin or os.environ["WEB_ORIGIN"])
+    if settings.web_origin:
+        origins.append(settings.web_origin)
     app.add_middleware(
         CORSMiddleware, allow_origins=origins, allow_methods=["GET", "POST"], allow_headers=["*"]
     )

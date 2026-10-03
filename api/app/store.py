@@ -27,7 +27,7 @@ class ReportStore:
     def save(self, report: dict) -> None:
         """Persist a report in the agents' layout; no-op if the run was already saved."""
         run_id = report["run_id"]
-        if not RUN_ID.fullmatch(run_id):
+        if not RUN_ID.fullmatch(run_id) or run_id == "latest":
             raise ValueError(f"unsafe run_id {run_id!r}")
         path = self._dir / f"{run_id}.json"
         if path.exists():

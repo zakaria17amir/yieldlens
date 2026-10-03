@@ -1,5 +1,6 @@
 import asyncio
 import json
+from pathlib import Path
 
 import httpx
 import pytest
@@ -139,3 +140,71 @@ def test_store_rejects_unsafe_ids(tmp_path, run_id):
     from app.store import ReportStore
 
     assert ReportStore(tmp_path).get(run_id) is None
+
+
+async def test_runner_events_from_worker_thread_are_delivered(tmp_path):
+    import threading
+
+    def blocking(run_id, on_event):
+        on_event({"node": "stats", "phase": "start", "run_id": run_id})
+        on_event({"node": "stats", "phase": "end", "run_id": run_id})
+
+    async def threaded_runner(run_id, on_event):
+        await asyncio.to_thread(blocking, run_id, on_event)
+        assert threading.current_thread() is threading.main_thread()
+        return {"run_id": run_id}
+
+    async with client_for(create_app(threaded_runner, tmp_path)) as client:
+        run_id = (await client.post("/desk/run")).json()["run_id"]
+        events = await read_events(client, run_id)
+    assert [name for name, _ in events] == ["node_start", "node_end", "done"]
+
+
+async def test_old_run_buffers_are_evicted(tmp_path):
+    async with client_for(create_app(fake_runner, tmp_path)) as client:
+        run_ids = []
+        for _ in range(23):
+            run_id = (await client.post("/desk/run")).json()["run_id"]
+            await read_events(client, run_id)
+            run_ids.append(run_id)
+        # evicted runs fall back to a synthetic `done` from the stored report
+        events = await read_events(client, run_ids[0])
+    assert [name for name, _ in events] == ["done"]
+
+
+async def test_default_runner_calls_run_desk_with_absolute_runs_dir(tmp_path, monkeypatch):
+    import desk.run
+    from app.main import default_runner
+    from desk.schemas import DeskReport
+
+    captured = {}
+
+    async def fake_run_desk(settings, **kwargs):
+        captured["settings"] = settings
+        captured["kwargs"] = kwargs
+        return DeskReport(run_id=kwargs["run_id"], created_at="2026-10-03T12:00:00Z")
+
+    monkeypatch.setattr(desk.run, "run_desk", fake_run_desk)
+    monkeypatch.chdir(tmp_path)
+    on_event = lambda e: None  # noqa: E731
+    report = await default_runner(Path("data/runs"))("r1", on_event)
+    assert captured["kwargs"] == {"run_id": "r1", "on_event": on_event}
+    assert Path(captured["settings"].runs_dir) == (tmp_path / "data" / "runs").resolve()
+    assert report["run_id"] == "r1" and report["created_at"] == "2026-10-03T12:00:00Z"
+    assert report["dry_run"] is False
+
+
+def test_store_rejects_latest_run_id(tmp_path):
+    from app.store import ReportStore
+
+    with pytest.raises(ValueError):
+        ReportStore(tmp_path).save({"run_id": "latest"})
+
+
+async def test_dev_fake_runner_replays_canned_report(tmp_path):
+    from scripts.dev_server import NODES, make_fake_runner
+
+    events = []
+    report = await make_fake_runner(0)("r9", events.append)
+    assert [e["node"] for e in events if e["phase"] == "start"] == NODES
+    assert report["run_id"] == "r9" and report["verdict"] is not None
