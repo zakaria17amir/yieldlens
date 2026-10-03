@@ -1,0 +1,24 @@
+name: desk-cron
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+jobs:
+  run-desk:
+    runs-on: ubuntu-latest
+    env:
+      API_URL: ${{ vars.API_URL }}
+    steps:
+      - name: Trigger desk run
+        run: |
+          if [ -z "$API_URL" ]; then
+            echo "::notice::API_URL repository variable is not set; skipping desk run"
+            exit 0
+          fi
+          code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$API_URL/desk/run")
+          echo "POST /desk/run -> $code"
+          if [ "$code" != "200" ] && [ "$code" != "409" ]; then
+            exit 1
+          fi
