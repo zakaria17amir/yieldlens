@@ -208,4 +208,21 @@ contract AgentRouterTest is Fixture {
         vm.expectRevert(Pausable.EnforcedPause.selector);
         _agentMove(alice, 1e6);
     }
+
+    function test_moveForFromEmptyVaultReverts() public {
+        _mintAndDeposit(alice, fixedVault, 100e6);
+        _delegate(alice, 10_000, 1 hours);
+        vm.expectRevert(AgentRouter.ZeroAssets.selector);
+        _agentMove(alice, 1e6);
+        (,,, uint64 lastMove) = router.policies(alice);
+        assertEq(lastMove, 0);
+    }
+
+    function test_firstMoveIgnoresCooldown() public {
+        _mintAndDeposit(alice, floatingVault, 100e6);
+        _delegate(alice, 10_000, type(uint32).max);
+        _agentMove(alice, 10e6);
+        vm.expectRevert();
+        _agentMove(alice, 10e6);
+    }
 }

@@ -50,6 +50,8 @@ contract AgentRouter is AccessControl, Pausable, ReentrancyGuard {
     }
 
     /// @notice Admin may call this more than once to migrate to a new vault pair.
+    /// @dev The admin is trusted: a malicious vault pair could misdirect the router's approvals and the
+    /// `received` amounts it moves, so the admin should be a multisig in production.
     function setVaults(address fixedVault_, address floatingVault_) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (fixedVault_ == address(0) || floatingVault_ == address(0)) revert ZeroAddress();
         if (IERC4626(fixedVault_).asset() != IERC4626(floatingVault_).asset()) revert AssetMismatch();
@@ -101,7 +103,7 @@ contract AgentRouter is AccessControl, Pausable, ReentrancyGuard {
         Policy memory p = policies[user];
         if (!p.enabled) revert PolicyDisabled(user);
         uint64 availableAt = p.lastMove + p.cooldown;
-        if (block.timestamp < availableAt) revert CooldownActive(availableAt);
+        if (p.lastMove != 0 && block.timestamp < availableAt) revert CooldownActive(availableAt);
         uint256 cap = userTotalAssets(user) * p.maxMoveBps / 10_000;
         if (assets > cap) revert ExceedsCap(assets, cap);
 
@@ -127,6 +129,7 @@ contract AgentRouter is AccessControl, Pausable, ReentrancyGuard {
             IERC4626(from).withdraw(assets, address(this), user);
         }
         uint256 received = token.balanceOf(address(this)) - before;
+        if (received == 0) revert ZeroAssets();
 
         token.forceApprove(to, received);
         IERC4626(to).deposit(received, user);

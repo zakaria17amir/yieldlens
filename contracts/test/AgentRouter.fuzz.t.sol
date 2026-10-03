@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
+import {Vm} from "forge-std/Vm.sol";
 import {Fixture} from "./helpers/Fixture.sol";
 import {AgentRouter} from "../src/AgentRouter.sol";
 
@@ -14,13 +15,29 @@ contract AgentRouterFuzzTest is Fixture {
         router.setPolicy(true, capBps, 0);
         uint256 cap = router.userTotalAssets(alice) * capBps / 10_000;
 
+        if (amount > cap) {
+            vm.expectRevert(abi.encodeWithSelector(AgentRouter.ExceedsCap.selector, amount, cap));
+            vm.prank(agent);
+            router.moveFor(alice, address(floatingVault), address(fixedVault), amount, bytes32(0));
+            return;
+        }
+        vm.recordLogs();
         vm.prank(agent);
-        if (amount > cap) vm.expectRevert(abi.encodeWithSelector(AgentRouter.ExceedsCap.selector, amount, cap));
         router.moveFor(alice, address(floatingVault), address(fixedVault), amount, bytes32(0));
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        uint256 received;
+        for (uint256 i; i < logs.length; i++) {
+            if (logs[i].emitter == address(router) && logs[i].topics[0] == AgentRouter.Moved.selector) {
+                (received,,) = abi.decode(logs[i].data, (uint256, bytes32, bool));
+            }
+        }
+        assertGt(received, 0);
+        assertLe(received, cap);
+        assertEq(usdg.balanceOf(address(router)), 0);
     }
 
     function testFuzz_cooldownRespected(uint32 cooldown, uint32 elapsed) public {
-        uint32 cd = uint32(bound(cooldown, 0, 1e9));
+        uint32 cd = cooldown;
         _mintAndDeposit(alice, floatingVault, 100e6);
         vm.prank(alice);
         router.setPolicy(true, 10_000, cd);
