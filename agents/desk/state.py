@@ -1,4 +1,6 @@
-from typing import TypedDict
+import operator
+from datetime import datetime
+from typing import Annotated, TypedDict
 
 from desk.schemas import (
     Case,
@@ -27,4 +29,5 @@ class DeskState(TypedDict, total=False):
     execution: ExecutionReport | None
     report: DeskReport | None
     report_hash: str | None
-    errors: list[str]
+    errors: Annotated[list[str], operator.add]
+    created_at: datetime
