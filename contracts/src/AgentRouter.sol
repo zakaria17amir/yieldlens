@@ -92,6 +92,23 @@ contract AgentRouter is AccessControl, Pausable, ReentrancyGuard {
         _move(msg.sender, fromVault, toVault, assets, reportHash, false);
     }
 
+    function moveFor(address user, address fromVault, address toVault, uint256 assets, bytes32 reportHash)
+        external
+        onlyRole(AGENT_ROLE)
+        whenNotPaused
+        nonReentrant
+    {
+        Policy memory p = policies[user];
+        if (!p.enabled) revert PolicyDisabled(user);
+        uint64 availableAt = p.lastMove + p.cooldown;
+        if (block.timestamp < availableAt) revert CooldownActive(availableAt);
+        uint256 cap = userTotalAssets(user) * p.maxMoveBps / 10_000;
+        if (assets > cap) revert ExceedsCap(assets, cap);
+
+        _move(user, fromVault, toVault, assets, reportHash, true);
+        policies[user].lastMove = uint64(block.timestamp);
+    }
+
     function _isVault(address vault) private view returns (bool) {
         return vault != address(0) && (vault == fixedVault || vault == floatingVault);
     }
