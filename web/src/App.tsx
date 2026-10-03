@@ -1,4 +1,5 @@
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import DeskPanel from "./components/DeskPanel";
 import PositionPanel from "./components/PositionPanel";
 import { isDeployed } from "./contracts";
 import { activeChain } from "./wagmi";
@@ -20,10 +21,7 @@ export default function App() {
       )}
       <main>
         <PositionPanel />
-        <section className="panel">
-          <h2>Desk</h2>
-          <p className="muted">Agent debate and verdict appear here.</p>
-        </section>
+        <DeskPanel />
         <section className="panel">
           <h2>Track record</h2>
           <p className="muted">Fix-or-float performance appears here.</p>

@@ -52,3 +52,10 @@ export const abis = {
   router: routerAbi as Abi,
   adapter: adapterAbi as Abi,
 };
+
+export function vaultName(address: string): string {
+  const a = address.toLowerCase();
+  if (a === deployments.fixedVault.toLowerCase()) return "Fixed";
+  if (a === deployments.floatingVault.toLowerCase()) return "Floating";
+  return `${address.slice(0, 6)}…${address.slice(-4)}`;
+}

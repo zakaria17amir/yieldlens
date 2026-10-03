@@ -10,7 +10,7 @@ from sse_starlette.sse import EventSourceResponse
 from app.runs import Runner, RunActive, RunManager
 from app.store import ReportStore
 
-LOCAL_WEB_ORIGIN = "http://localhost:5173"
+LOCAL_WEB_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"]
 
 
 class ApiSettings(BaseSettings):
@@ -39,7 +39,7 @@ def create_app(runner: Runner | None = None, runs_dir: Path | None = None) -> Fa
     manager = RunManager(runner or default_runner(runs_dir), store)
 
     app = FastAPI(title="YieldLens desk API")
-    origins = [LOCAL_WEB_ORIGIN]
+    origins = list(LOCAL_WEB_ORIGINS)
     if settings.web_origin:
         origins.append(settings.web_origin)
     app.add_middleware(
