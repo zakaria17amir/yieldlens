@@ -1,0 +1,38 @@
+[project]
+name = "desk"
+version = "0.1.0"
+description = "YieldLens v2 agent desk"
+requires-python = ">=3.12"
+dependencies = [
+    "httpx>=0.28.1",
+    "langchain-anthropic>=1.7.5",
+    "langchain-core>=1.6.6",
+    "langchain-openai>=1.6.7",
+    "langgraph>=1.2.12",
+    "pydantic>=2.13.5",
+    "pydantic-settings>=2.15.0",
+    "web3>=8.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["desk"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+markers = [
+    "anvil: needs a local anvil node",
+    "live: hits live external APIs",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "respx>=0.23.1",
+]
