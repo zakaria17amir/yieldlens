@@ -10,3 +10,4 @@ api/data/runs/*.json
 web/node_modules
 web/dist
 .superpowers/
+.worktrees/
