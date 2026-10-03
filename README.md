@@ -21,7 +21,8 @@ export ARBITRUM_SEPOLIA_RPC_URL=...      # RPC endpoint
 export DEPLOYER_PRIVATE_KEY=0x...        # deployer / vault owner / router admin
 export AGENT_ADDRESS=0x...               # address of the agent key (gets AGENT_ROLE)
 export ETHERSCAN_API_KEY=...         # Etherscan V2 key (also valid for Arbiscan)
-forge script script/Deploy.s.sol --rpc-url arbitrum_sepolia --broadcast \n  --verify --verifier etherscan --etherscan-api-key $ETHERSCAN_API_KEY --chain 421614
+forge script script/Deploy.s.sol --rpc-url arbitrum_sepolia --broadcast \
+  --verify --verifier etherscan --etherscan-api-key $ETHERSCAN_API_KEY --chain 421614
 # fallback (legacy Arbiscan API): --verify --etherscan-api-key $ARBISCAN_API_KEY --verifier-url https://api-sepolia.arbiscan.io/api
 ./export-abis.sh
 ```
