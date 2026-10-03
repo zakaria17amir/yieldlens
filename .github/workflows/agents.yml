@@ -1,0 +1,27 @@
+name: agents
+
+on:
+  push:
+    paths:
+      - "agents/**"
+  pull_request:
+    paths:
+      - "agents/**"
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: agents
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - run: uv sync
+      - run: uv run pytest -W error -m "not anvil and not live"
+      - run: uv run python evals/run_evals.py --mode cached
+      - name: Flag rule-mode eval cache
+        run: |
+          if grep -q '"rule"' evals/results/latest.json; then
+            echo "::warning::RULE-MODE CACHE: plumbing check only, not model evidence - re-record with --mode live --record"
+          fi

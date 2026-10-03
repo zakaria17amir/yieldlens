@@ -1,0 +1,45 @@
+{
+ "recorded_with": "rule",
+ "case": "float_win_02",
+ "responses": {
+  "Case": [
+   {
+    "position": "fixed",
+    "confidence": 0.4,
+    "arguments": [
+     {
+      "claim": "Floating out-yielded fixed on only 100.0% of days",
+      "evidence_field": "stats.pct_days_float_beat_fixed"
+     },
+     {
+      "claim": "Fixed locks 483 bps",
+      "evidence_field": "stats.breakeven_apr_bps"
+     }
+    ]
+   },
+   {
+    "position": "floating",
+    "confidence": 0.7,
+    "arguments": [
+     {
+      "claim": "GMX currently pays 149 bps versus the fixed rate",
+      "evidence_field": "stats.current_gap_bps"
+     },
+     {
+      "claim": "Floating yield trend over 30 days is flat",
+      "evidence_field": "stats.trend_30d"
+     }
+    ]
+   }
+  ],
+  "Verdict": [
+   {
+    "target_fixed_bps": 1500,
+    "vetoed": false,
+    "rationale": "Band rule: floating beat fixed on 100.0% of days",
+    "objections": [],
+    "needs_rebuttal": false
+   }
+  ]
+ }
+}

@@ -1,0 +1,34 @@
+from typing import Literal
+
+from pydantic import AliasChoices, Field, SecretStr
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore", populate_by_name=True)
+
+    anthropic_api_key: SecretStr | None = None
+    openai_api_key: SecretStr | None = None
+    llm_provider: Literal["anthropic", "openai"] = "anthropic"
+    model_small: str = "claude-3-5-haiku-latest"
+    model_large: str = "claude-sonnet-4-5"
+
+    gmx_apy_url: str = "https://arbitrum-api.gmxinfra.io/apy"
+    pendle_api_url: str = "https://api-v2.pendle.finance/core"
+    pendle_chain_id: int = 42161
+    pendle_market_address: str | None = None
+    gmx_market_name: str = "ETH/USD [ETH-ETH]"
+
+    max_age_hours: int = 12
+    min_days_to_expiry: int = 14
+    min_change_bps: int = 500
+    history_days: int = 90
+    simulate_live_market: bool = False
+
+    rpc_url: str = Field(
+        "http://127.0.0.1:8545", validation_alias=AliasChoices("ARBITRUM_SEPOLIA_RPC_URL", "RPC_URL")
+    )
+    agent_private_key: SecretStr | None = None
+    deployments_path: str = "../contracts/deployments/arbitrum-sepolia.json"
+    runs_dir: str = "../api/data/runs"
+    max_gas_per_run: int = 3_000_000
