@@ -18,6 +18,7 @@ contract RouterHandler is Test {
     uint256 public agentMoveCount;
     mapping(address => uint256) public moves;
     mapping(address => uint256) public deposits;
+    mapping(address => uint256) public redeems;
     mapping(address => uint256) public deposited;
     mapping(address => uint256) public withdrawn;
 
@@ -77,6 +78,7 @@ contract RouterHandler is Test {
         shares = bound(shares, 1, balance);
         vm.prank(user);
         withdrawn[user] += v.redeem(shares, user, user);
+        redeems[user]++;
     }
 
     function moveSelf(uint256 actorSeed, uint256 vaultSeed, uint256 amount) external {
@@ -134,13 +136,15 @@ contract InvariantsTest is Fixture {
         assertEq(floatingVault.totalAssets(), floatingAdapter.totalAssets());
     }
 
-    /// ERC-4626 floors shares on deposit and assets on conversion, so each deposit and each move may round down by 1 wei.
+    /// ERC-4626 floors shares on deposit and assets on redeem/conversion, so each deposit, each redeem and each move
+    /// (one withdraw + one deposit) may round down by 1 wei.
     function invariant_usersNeverLoseMoreThanOneWeiPerMove() public view {
         address[2] memory users = [alice, bob];
         for (uint256 i; i < users.length; i++) {
             address u = users[i];
             assertGe(
-                router.userTotalAssets(u) + handler.withdrawn(u) + 2 * handler.moves(u) + handler.deposits(u),
+                router.userTotalAssets(u) + handler.withdrawn(u) + 2 * handler.moves(u) + handler.deposits(u)
+                    + handler.redeems(u),
                 handler.deposited(u)
             );
         }
