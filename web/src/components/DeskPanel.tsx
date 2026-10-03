@@ -35,7 +35,7 @@ export default function DeskPanel() {
       setReport(latest);
       setSource(latest ? "live" : "none");
     } catch {
-      setReport(goldenRun as unknown as DeskReport);
+      setReport((current) => current ?? (goldenRun as unknown as DeskReport));
       setSource("cached");
     }
   }, []);

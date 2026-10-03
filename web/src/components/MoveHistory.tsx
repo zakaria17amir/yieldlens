@@ -11,6 +11,7 @@ const MOVED = parseAbiItem(
 );
 const ZERO_HASH = `0x${"00".repeat(32)}`;
 const MAX_ROWS = 25;
+const API_URL: string = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
 interface Row {
   key: string;
@@ -106,12 +107,13 @@ export default function MoveHistory({ user, refreshKey }: { user: Address; refre
                 <td className="num">
                   {r.reportHash === ZERO_HASH ? (
                     "—"
-                  ) : (
-                    <a href={`#/report/${r.reportHash}`} title={r.reportHash}>
-                      {r.reportHash.slice(0, 10)}…
+                  ) : latest && latest.hash === r.reportHash ? (
+                    <a href={`${API_URL}/desk/latest`} target="_blank" rel="noreferrer" title={r.reportHash}>
+                      {r.reportHash.slice(0, 10)}… (run {latest.runId})
                     </a>
+                  ) : (
+                    <span title={r.reportHash}>{r.reportHash.slice(0, 10)}…</span>
                   )}
-                  {latest && latest.hash === r.reportHash && <span className="muted small"> latest run {latest.runId}</span>}
                 </td>
               </tr>
             ))}

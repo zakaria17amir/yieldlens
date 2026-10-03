@@ -1,50 +1,27 @@
-# React + TypeScript + Vite
+# YieldLens web
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + Vite + wagmi UI: position and delegation controls, desk transcript with live progress, move history and track record.
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+```bash
+npm i
+cp .env.example .env
+npm run dev          # http://localhost:5173
+npm test -- --run
+npm run build
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+## Environment (`.env`)
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+| Variable | Purpose |
+| --- | --- |
+| `VITE_API_URL` | Desk API base URL (default `http://localhost:8000`) |
+| `VITE_WALLETCONNECT_PROJECT_ID` | WalletConnect project id |
+| `VITE_DUNE_EMBED_URL` | Dune dashboard embedded in the Track Record panel (hidden if empty) |
+| `VITE_CHAIN=anvil` | Use a local Anvil chain on port 8546 instead of Arbitrum Sepolia |
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+Contract addresses come from `../contracts/deployments/arbitrum-sepolia.json`; until it exists the example file is used and the page shows a "contracts not deployed" banner. With `VITE_CHAIN=anvil` addresses are read from `public/deployments.anvil.json` (git-ignored; copy the JSON written by `forge script script/Deploy.s.sol --rpc-url http://127.0.0.1:8546 --broadcast`).
+
+## Dev helpers
+
+- `?as=0x…` (dev server only): shows that address's position read-only when no wallet is connected.
+- Demo without an LLM key: in `../api` run `uv run python scripts/dev_server.py --fake-runner` and the "Convene desk now" button replays a canned run. If the API is down the Desk panel falls back to `src/golden_run.json` with a "Cached run (API offline)" badge.

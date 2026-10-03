@@ -15,6 +15,7 @@ interface Props {
   assets: bigint;
   wallet: bigint;
   canWrite: boolean;
+  approved: boolean;
   tx: TxState;
 }
 
@@ -39,6 +40,7 @@ export default function VaultCard({
   assets,
   wallet,
   canWrite,
+  approved,
   tx,
 }: Props) {
   const [amount, setAmount] = useState("10");
@@ -88,9 +90,10 @@ export default function VaultCard({
         <button disabled={disabled || assets < (parsed ?? 0n)} onClick={withdraw}>
           Withdraw
         </button>
-        <button disabled={disabled || assets < (parsed ?? 0n)} onClick={move}>
+        <button disabled={disabled || !approved || assets < (parsed ?? 0n)} onClick={move}>
           Move → {otherTitle}
         </button>
+        {!approved && <span className="muted small">Approve the router first</span>}
       </div>
     </div>
   );

@@ -105,6 +105,7 @@ export default function PositionPanel() {
               assets={fixedAssets}
               wallet={walletUsdg}
               canWrite={canWrite}
+              approved={approved}
               tx={tx}
             />
             <VaultCard
@@ -117,6 +118,7 @@ export default function PositionPanel() {
               assets={floatingAssets}
               wallet={walletUsdg}
               canWrite={canWrite}
+              approved={approved}
               tx={tx}
             />
             <DelegationCard policy={policy} approved={approved} canWrite={canWrite} tx={tx} />

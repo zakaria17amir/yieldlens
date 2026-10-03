@@ -3,7 +3,7 @@ import { vaultName } from "../contracts";
 import { formatUsdg, shortAddr } from "../format";
 import { activeChain } from "../wagmi";
 
-const EXPLORER = "https://sepolia.arbiscan.io/tx/";
+const explorerUrl = activeChain.blockExplorers?.default.url;
 
 export default function ExecutionCard({
   execution,
@@ -49,8 +49,8 @@ export default function ExecutionCard({
                 </td>
                 <td className="num">{formatUsdg(BigInt(m.assets))}</td>
                 <td className="num">
-                  {m.tx_hash && activeChain.id === 421614 ? (
-                    <a href={`${EXPLORER}${m.tx_hash}`} target="_blank" rel="noreferrer">
+                  {m.tx_hash && explorerUrl ? (
+                    <a href={`${explorerUrl}/tx/${m.tx_hash}`} target="_blank" rel="noreferrer">
                       {shortAddr(m.tx_hash)}
                     </a>
                   ) : (

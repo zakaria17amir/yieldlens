@@ -28,7 +28,8 @@ export function useTx(onDone: () => void): TxState {
     try {
       for (const call of calls) {
         const hash = await writeContractAsync(call as Parameters<typeof writeContractAsync>[0]);
-        await waitForTransactionReceipt(config, { hash });
+        const receipt = await waitForTransactionReceipt(config, { hash });
+        if (receipt.status !== "success") throw new Error(`${label} reverted`);
       }
     } catch (e) {
       setError((e as { shortMessage?: string; message: string }).shortMessage ?? (e as Error).message);
