@@ -58,7 +58,11 @@ def configure_logging() -> None:
 
 
 class GatedExecutor:
-    """Skips execution when the new target is within min_change_bps of the previous run's."""
+    """Skips execution when the new target is within min_change_bps of the previous run's.
+
+    Known limitation: only targets are compared, not users' actual positions, so users who
+    drifted or were skipped earlier are not rebalanced until the target moves.
+    """
 
     def __init__(self, inner: ExecutorProtocol, previous_target: int | None, min_change_bps: int):
         self._inner = inner
@@ -83,7 +87,7 @@ def _previous_target(runs_dir: Path) -> int | None:
         return None
     try:
         previous = DeskReport.model_validate_json(path.read_text(encoding="utf-8"))
-    except ValueError:
+    except (OSError, ValueError):
         logger.warning("could not parse %s; skipping change gate", path)
         return None
     if previous.verdict is None or previous.verdict.vetoed:

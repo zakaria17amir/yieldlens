@@ -33,7 +33,7 @@ def anvil():
     forge = shutil.which("forge")
     anvil_bin = shutil.which("anvil")
     if forge is None or anvil_bin is None or not (contracts / "script" / "Deploy.s.sol").exists():
-        pytest.skip("anvil/forge/contracts not available")
+        pytest.fail("anvil tests need forge and anvil on PATH and CONTRACTS_DIR pointing at the contracts")
 
     w3 = Web3(Web3.HTTPProvider(ANVIL_URL))
     process = None
@@ -41,49 +41,53 @@ def anvil():
         process = subprocess.Popen(
             [anvil_bin, "--port", "8546"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
         )
+    try:
         for _ in range(50):
             if w3.is_connected():
                 break
             time.sleep(0.2)
         else:
-            process.terminate()
             pytest.fail("anvil did not start")
 
-    accounts = w3.eth.accounts
-    env = {
-        **os.environ,
-        "DEPLOYER_PRIVATE_KEY": DEPLOYER_KEY,
-        "AGENT_ADDRESS": accounts[1],
-    }
-    deployments_file = contracts / "deployments" / "arbitrum-sepolia.json"
-    try:
-        subprocess.run(
-            [forge, "script", "script/Deploy.s.sol", "--rpc-url", ANVIL_URL, "--broadcast"],
-            cwd=contracts,
-            env=env,
-            check=True,
-            capture_output=True,
-        )
-        deployments = json.loads(deployments_file.read_text(encoding="utf-8"))
-        abis = {
-            name: json.loads((contracts / "deployments" / "abi" / f"{name}.json").read_text(encoding="utf-8"))
-            for name in CONTRACT_NAMES
+        accounts = w3.eth.accounts
+        env = {**os.environ, "DEPLOYER_PRIVATE_KEY": DEPLOYER_KEY, "AGENT_ADDRESS": accounts[1]}
+        deployments_file = contracts / "deployments" / "arbitrum-sepolia.json"
+        try:
+            try:
+                subprocess.run(
+                    [forge, "script", "script/Deploy.s.sol", "--rpc-url", ANVIL_URL, "--broadcast"],
+                    cwd=contracts,
+                    env=env,
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+            except subprocess.CalledProcessError as exc:
+                print(exc.stderr)
+                raise
+            deployments = json.loads(deployments_file.read_text(encoding="utf-8"))
+            abis = {
+                name: json.loads(
+                    (contracts / "deployments" / "abi" / f"{name}.json").read_text(encoding="utf-8")
+                )
+                for name in CONTRACT_NAMES
+            }
+        finally:
+            deployments_file.unlink(missing_ok=True)
+            shutil.rmtree(contracts / "broadcast", ignore_errors=True)
+
+        yield {
+            "w3": w3,
+            "deployments": deployments,
+            "abis": abis,
+            "deployer": accounts[0],
+            "agent": accounts[1],
+            "users": accounts[2:10],
+            "agent_key": AGENT_KEY,
         }
     finally:
-        deployments_file.unlink(missing_ok=True)
-        shutil.rmtree(contracts / "broadcast", ignore_errors=True)
-
-    yield {
-        "w3": w3,
-        "deployments": deployments,
-        "abis": abis,
-        "deployer": accounts[0],
-        "agent": accounts[1],
-        "users": accounts[2:10],
-        "agent_key": AGENT_KEY,
-    }
-    if process is not None:
-        process.terminate()
+        if process is not None:
+            process.terminate()
 
 
 @pytest.fixture
