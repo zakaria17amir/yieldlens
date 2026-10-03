@@ -42,11 +42,11 @@ Demo video: _pending recording_ (script: [docs/demo-script.md](docs/demo-script.
 
 | Criterion | How v2 meets it |
 | --- | --- |
-| Deployed on an Arbitrum chain | Arbitrum Sepolia (guaranteed). Arbitrum One with real USDG is a v2 seam, not in scope. |
+| Deployed on an Arbitrum chain | Targets Arbitrum Sepolia; deployment pending (see Status). Arbitrum One with real USDG is a v2 seam. |
 | Smart contract quality | OpenZeppelin ERC-4626 vaults, AccessControl, Pausable. Agents can only move funds between two allowlisted vaults, for opted-in users, within user-set caps. No path to withdraw to an external address. Foundry unit, fuzz and invariant tests. |
 | Product-market fit | Progressive trust: users can watch the desk, move manually, or delegate with their own caps. Same product serves sceptics and believers; retention comes from the on-chain track record. |
 | Innovation | Adversarial agent desk (two advocates, a risk officer that must address every argument) whose decisions are hashed on-chain and auditable from Dune back to the agent transcript. |
-| Real problem | The GMX x Pendle integration is live; no tool connects the two yield models into a decision, let alone acts on it. |
+| Real problem | GMX and Pendle both offer yield on GM exposure (floating fees vs a fixed rate), but no tool connects the two into a decision, let alone acts on it. Pendle's GM markets are currently expired; see Status. |
 | USDG bonus | USDG is the vault asset. Mock USDG on Sepolia (6 decimals, matching the real token); real USDG `0x004B506865409877C9fA29bfb1ebA929984B9bbC` on Arbitrum One behind the same interface. |
 
 ## Status and honest limits
@@ -127,19 +127,39 @@ Read this with care: the replay runs the deterministic band rule (no LLM), on th
 
 ## Run locally
 
+Every block starts from the repository root.
+
+Contracts:
+
 ```bash
-# contracts
 cd contracts && forge test
+```
 
-# agents (needs ANTHROPIC_API_KEY or OPENAI_API_KEY for a real run)
+Agents (a real run needs `ANTHROPIC_API_KEY` or `OPENAI_API_KEY`):
+
+```bash
 cd agents && uv sync && uv run pytest
-uv run python -m desk.run --dry-run --simulate-live-market
+```
 
-# api (serves data/runs, runs the desk on POST /desk/run)
+```bash
+cd agents && uv run python -m desk.run --dry-run --simulate-live-market
+```
+
+API (serves `data/runs`, runs the desk on `POST /desk/run`):
+
+```bash
 cd api && uv sync && uv run uvicorn app.main:app --reload
-uv run python scripts/dev_server.py --fake-runner     # demo without an LLM key: replays a canned run
+```
 
-# web
+API demo without an LLM key (replays a canned run):
+
+```bash
+cd api && uv run python scripts/dev_server.py --fake-runner
+```
+
+Web:
+
+```bash
 cd web && npm i && cp .env.example .env && npm run dev
 ```
 

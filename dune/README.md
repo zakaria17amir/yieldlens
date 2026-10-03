@@ -16,11 +16,19 @@ Four queries over the `AgentRouter` events on Arbitrum Sepolia.
 
 ## Data source finding
 
-- Dune's documented catalog (docs.dune.com data catalog and the Sim API chain list) covers Arbitrum One and Arbitrum Nova; I found no documentation page for an Arbitrum Sepolia dataset. A public community query titled "Recent 2-Hour Arbitrum Sepolia Transactions" suggests a raw `arbitrum_sepolia` schema has existed, but I could not open it (HTTP 403) or confirm it today, and I have no Dune account here to run `SHOW SCHEMAS`.
-- Decoded tables for this router are not assumed. The queries therefore read raw logs from `arbitrum_sepolia.logs` filtered by `contract_address` and `topic0`, so no ABI submission is needed:
-  - `Moved(address,address,address,uint256,bytes32,bool)` = `0x72b6019c7f33fe643036d112cba2cd2c9fe32f18c5de9dfec010c3f080133a7e`
-  - `PolicySet(address,bool,uint16,uint32)` = `0xa18ace2fa02284c1307437fb279d27fc7333c25dffdade2bc433e2c3dd8569d2`
-- Event layout used: `Moved` topics are `[topic0, user, fromVault, toVault]` and data is `assets | reportHash | byAgent` (32-byte words). `PolicySet` topics are `[topic0, user]` and data is `enabled | maxMoveBps | cooldown`.
+- Dune's documented catalog (docs.dune.com data catalog and the Sim API chain list) covers Arbitrum One and Arbitrum Nova; no documentation page for an Arbitrum Sepolia dataset was found. A public community query titled "Recent 2-Hour Arbitrum Sepolia Transactions" suggests a raw `arbitrum_sepolia` schema has existed, but the page could not be opened (HTTP 403) and availability was not verified (no Dune account was available to run `SHOW SCHEMAS`).
+- Decoded tables for this router are not assumed. The queries therefore read raw logs from `arbitrum_sepolia.logs` filtered by `contract_address` and `topic0`, so no ABI submission is needed. Topic hashes were produced with:
+
+  ```bash
+  cast keccak "Moved(address,address,address,uint256,bytes32,bool)"
+  # 0x72b6019c7f33fe643036d112cba2cd2c9fe32f18c5de9dfec010c3f080133a7e
+  cast keccak "PolicySet(address,bool,uint16,uint32)"
+  # 0xa18ace2fa02284c1307437fb279d27fc7333c25dffdade2bc433e2c3dd8569d2
+  ```
+
+- Event layout used: `Moved` topics are `[topic0, user, fromVault, toVault]` and data is `assets | reportHash | byAgent` (32-byte words; `byAgent` is read from its last byte). `PolicySet` topics are `[topic0, user]` and data is `enabled | maxMoveBps | cooldown`.
+- The SQL has not been executed against Dune.
+- On-chain `Moved` events carry no "simulated" flag, so moves caused by simulated-market runs are indistinguishable from others in Dune. Only the run JSON (`pendle.simulated`) records that.
 
 ### Fallback if `arbitrum_sepolia` is not available in Dune
 
@@ -39,7 +47,7 @@ cd agents
 python replay/export_dune.py        # reads ../api/data/runs/*.json, writes replay/results/desk_history.csv
 ```
 
-Upload the CSV to Dune as `yieldlens_desk_history` (`date, target_fixed_bps, implied_apy_bps, underlying_apy_bps`). The "SIMULATED MARKET" demo mode feeds the APY columns from the expired market's history; runs are labelled in their JSON.
+The CSV has one row per day (the last run of that day by `created_at`). Upload it to Dune as `yieldlens_desk_history` (`date, target_fixed_bps, implied_apy_bps, underlying_apy_bps, run_id`); query 04 ignores `run_id`. The "SIMULATED MARKET" demo mode feeds the APY columns from the expired market's history; runs are labelled in their JSON.
 
 ## Dashboard
 

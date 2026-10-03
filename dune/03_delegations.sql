@@ -4,7 +4,7 @@ WITH events AS (
     SELECT
         CAST(block_time AS date) AS d,
         bytearray_substring(topic1, 13, 20) AS usr,
-        bytearray_to_uint256(bytearray_substring(data, 1, 32)) = 1 AS enabled,
+        bytearray_substring(data, 32, 1) = 0x01 AS enabled,
         block_number,
         index AS log_index
     FROM arbitrum_sepolia.logs

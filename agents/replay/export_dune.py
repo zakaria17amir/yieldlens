@@ -1,4 +1,7 @@
-"""Export desk runs (api/data/runs/*.json) to the CSV uploaded to Dune as `yieldlens_desk_history`."""
+"""Export desk runs (api/data/runs/*.json) to the CSV uploaded to Dune as `yieldlens_desk_history`.
+
+One row per day: the last run of that day (by created_at).
+"""
 
 import argparse
 import csv
@@ -7,10 +10,11 @@ from pathlib import Path
 
 AGENTS = Path(__file__).resolve().parent.parent
 SKIP = {"latest.json", "latest_executed.json"}
-COLUMNS = ["date", "target_fixed_bps", "implied_apy_bps", "underlying_apy_bps"]
+COLUMNS = ["date", "target_fixed_bps", "implied_apy_bps", "underlying_apy_bps", "run_id"]
 
 
 def rows(runs_dir: Path):
+    last_per_day: dict[str, tuple[str, dict]] = {}
     for path in sorted(runs_dir.glob("*.json")):
         if path.name in SKIP:
             continue
@@ -18,12 +22,20 @@ def rows(runs_dir: Path):
         verdict, pendle = run.get("verdict"), run.get("pendle")
         if not verdict or not pendle:
             continue
-        yield {
-            "date": run["created_at"][:10],
-            "target_fixed_bps": verdict["target_fixed_bps"],
-            "implied_apy_bps": pendle["implied_apy_bps"],
-            "underlying_apy_bps": pendle["underlying_apy_bps"],
-        }
+        day, created = run["created_at"][:10], run["created_at"]
+        if day not in last_per_day or created >= last_per_day[day][0]:
+            last_per_day[day] = (
+                created,
+                {
+                    "date": day,
+                    "target_fixed_bps": verdict["target_fixed_bps"],
+                    "implied_apy_bps": pendle["implied_apy_bps"],
+                    "underlying_apy_bps": pendle["underlying_apy_bps"],
+                    "run_id": run["run_id"],
+                },
+            )
+    for day in sorted(last_per_day):
+        yield last_per_day[day][1]
 
 
 def main() -> None:

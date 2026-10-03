@@ -3,8 +3,8 @@
 WITH moved AS (
     SELECT
         block_time,
-        bytearray_to_uint256(bytearray_substring(data, 1, 32)) AS assets,
-        bytearray_to_uint256(bytearray_substring(data, 65, 32)) = 1 AS by_agent
+        CAST(bytearray_to_uint256(bytearray_substring(data, 1, 32)) AS double) AS assets,
+        bytearray_substring(data, 96, 1) = 0x01 AS by_agent
     FROM arbitrum_sepolia.logs
     WHERE contract_address = from_hex(substr('{{router_address}}', 3))
       AND topic0 = 0x72b6019c7f33fe643036d112cba2cd2c9fe32f18c5de9dfec010c3f080133a7e

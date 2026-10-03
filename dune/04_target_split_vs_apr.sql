@@ -1,12 +1,12 @@
 -- Desk target split against the two APRs, next to on-chain moves.
 -- Parameters: {{router_address}}, {{dune_user}} (the Dune account that uploaded the CSV).
 -- Upload agents/replay/results/desk_history.csv (python agents/replay/export_dune.py) as table yieldlens_desk_history:
--- columns date, target_fixed_bps, implied_apy_bps, underlying_apy_bps.
+-- columns date, target_fixed_bps, implied_apy_bps, underlying_apy_bps, run_id (one row per day: the last run of that day).
 WITH moved AS (
     SELECT
         CAST(block_time AS date) AS d,
         count(*) AS moves,
-        sum(bytearray_to_uint256(bytearray_substring(data, 1, 32))) / 1e6 AS usdg_moved
+        sum(CAST(bytearray_to_uint256(bytearray_substring(data, 1, 32)) AS double)) / 1e6 AS usdg_moved
     FROM arbitrum_sepolia.logs
     WHERE contract_address = from_hex(substr('{{router_address}}', 3))
       AND topic0 = 0x72b6019c7f33fe643036d112cba2cd2c9fe32f18c5de9dfec010c3f080133a7e
