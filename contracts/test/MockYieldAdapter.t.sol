@@ -14,6 +14,7 @@ contract MockYieldAdapterTest is Test {
     function setUp() public {
         usdg = new MockUSDG();
         adapter = new MockYieldAdapter(usdg, vault, 1000, owner);
+        usdg.setMinter(address(adapter), true);
     }
 
     function _vaultDeposit(uint256 assets) internal {
@@ -52,11 +53,35 @@ contract MockYieldAdapterTest is Test {
     }
 
     function test_pendingDoesNotOverflowOnHugePrincipal() public {
+        // slot 2 is MockYieldAdapter._principal; mint caps make 1e70 unreachable through deposits
         vm.store(address(adapter), bytes32(uint256(2)), bytes32(uint256(1e70)));
         vm.prank(owner);
         adapter.setAprBps(10_000);
         vm.warp(block.timestamp + 3650 days);
         assertGt(adapter.totalAssets(), 1e70);
+    }
+
+    function test_accrueLargeYieldDoesNotRevert() public {
+        usdg.setMinter(address(this), true);
+        usdg.mintYield(vault, 100_000_000e6);
+        vm.prank(owner);
+        adapter.setAprBps(2000);
+        vm.startPrank(vault);
+        usdg.approve(address(adapter), type(uint256).max);
+        adapter.deposit(100_000_000e6);
+        vm.stopPrank();
+        vm.warp(block.timestamp + 3650 days);
+        uint256 expected = adapter.totalAssets();
+        assertGt(expected, 10_000_000e6 * 2);
+        adapter.accrue();
+        assertEq(adapter.principal(), expected);
+        assertEq(usdg.balanceOf(address(adapter)), expected);
+    }
+
+    function test_mintYieldRequiresMinter() public {
+        vm.prank(address(0xBAD));
+        vm.expectRevert(MockUSDG.NotMinter.selector);
+        usdg.mintYield(address(0xBAD), 1);
     }
 
     function test_setAprBpsEmits() public {

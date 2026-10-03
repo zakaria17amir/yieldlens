@@ -2,6 +2,7 @@
 pragma solidity 0.8.24;
 
 import {Script} from "forge-std/Script.sol";
+import {VmSafe} from "forge-std/Vm.sol";
 import {MockUSDG} from "../src/MockUSDG.sol";
 import {MockYieldAdapter} from "../src/MockYieldAdapter.sol";
 import {StrategyVault} from "../src/StrategyVault.sol";
@@ -21,6 +22,8 @@ contract Deploy is Script {
         StrategyVault floatingVault = new StrategyVault(usdg, "YieldLens Floating USDG", "ylFLT", deployer);
         MockYieldAdapter fixedAdapter = new MockYieldAdapter(usdg, address(fixedVault), 1000, deployer);
         MockYieldAdapter floatingAdapter = new MockYieldAdapter(usdg, address(floatingVault), 2000, deployer);
+        usdg.setMinter(address(fixedAdapter), true);
+        usdg.setMinter(address(floatingAdapter), true);
         fixedVault.setAdapter(fixedAdapter);
         floatingVault.setAdapter(floatingAdapter);
         AgentRouter router = new AgentRouter(deployer);
@@ -29,8 +32,11 @@ contract Deploy is Script {
         usdg.mint(deployer, 1_000_000e6);
         vm.stopBroadcast();
 
+        if (!vm.isContext(VmSafe.ForgeContext.ScriptBroadcast)) return;
+
         string memory key = "deployment";
         vm.serializeUint(key, "chainId", block.chainid);
+        // block before the deploy transactions; safe as a log fromBlock
         vm.serializeUint(key, "deployedAtBlock", block.number);
         vm.serializeAddress(key, "usdg", address(usdg));
         vm.serializeAddress(key, "fixedVault", address(fixedVault));

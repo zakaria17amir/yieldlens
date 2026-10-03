@@ -20,15 +20,17 @@ cd contracts
 export ARBITRUM_SEPOLIA_RPC_URL=...      # RPC endpoint
 export DEPLOYER_PRIVATE_KEY=0x...        # deployer / vault owner / router admin
 export AGENT_ADDRESS=0x...               # address of the agent key (gets AGENT_ROLE)
-export ARBISCAN_API_KEY=...
-forge script script/Deploy.s.sol --rpc-url arbitrum_sepolia --broadcast \
-  --verify --etherscan-api-key $ARBISCAN_API_KEY --verifier-url https://api-sepolia.arbiscan.io/api
+export ETHERSCAN_API_KEY=...         # Etherscan V2 key (also valid for Arbiscan)
+forge script script/Deploy.s.sol --rpc-url arbitrum_sepolia --broadcast \n  --verify --verifier etherscan --etherscan-api-key $ETHERSCAN_API_KEY --chain 421614
+# fallback (legacy Arbiscan API): --verify --etherscan-api-key $ARBISCAN_API_KEY --verifier-url https://api-sepolia.arbiscan.io/api
 ./export-abis.sh
 ```
 
 The script writes `contracts/deployments/arbitrum-sepolia.json` (commit it). ABIs live in `contracts/deployments/abi/`; `arbitrum-sepolia.example.json` shows the shape with zero addresses.
 
 **Trust model.** The router admin is trusted: it can pause, grant and revoke the agent role, and set the vault pair exactly once (migration means deploying a new router). Use a multisig as admin in production. The agent key can only move opted-in users between the two configured vaults, within each user's cap and cooldown, and the user is always the receiver. `MockUSDG` and `MockYieldAdapter` are testnet-only: the mock token is an unrestricted faucet with a per-call mint cap.
+
+**Migration.** The vault pair is set once per router. To migrate, deploy a new router, pause the old one, and have users revoke their vault-share approvals on the old router.
 
 | Contract | Address |
 | --- | --- |

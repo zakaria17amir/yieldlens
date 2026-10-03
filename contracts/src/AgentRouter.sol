@@ -105,6 +105,7 @@ contract AgentRouter is AccessControl, Pausable, ReentrancyGuard {
         whenNotPaused
         nonReentrant
     {
+        _requireVaults(fromVault, toVault);
         Policy memory p = policies[user];
         if (!p.enabled) revert PolicyDisabled(user);
         uint64 availableAt = p.lastMove + p.cooldown;
@@ -116,14 +117,18 @@ contract AgentRouter is AccessControl, Pausable, ReentrancyGuard {
         _move(user, fromVault, toVault, assets, reportHash, true);
     }
 
+    function _requireVaults(address from, address to) private view {
+        if (!_isVault(from)) revert NotAllowedVault(from);
+        if (!_isVault(to)) revert NotAllowedVault(to);
+        if (from == to) revert SameVault();
+    }
+
     function _isVault(address vault) private view returns (bool) {
         return vault != address(0) && (vault == fixedVault || vault == floatingVault);
     }
 
     function _move(address user, address from, address to, uint256 assets, bytes32 reportHash, bool byAgent) internal {
-        if (!_isVault(from)) revert NotAllowedVault(from);
-        if (!_isVault(to)) revert NotAllowedVault(to);
-        if (from == to) revert SameVault();
+        _requireVaults(from, to);
         if (assets == 0) revert ZeroAssets();
 
         IERC20 token = IERC20(IERC4626(from).asset());

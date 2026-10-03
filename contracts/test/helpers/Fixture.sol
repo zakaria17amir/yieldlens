@@ -28,6 +28,8 @@ abstract contract Fixture is Test {
         fixedAdapter = new MockYieldAdapter(usdg, address(fixedVault), 1000, admin);
         floatingAdapter = new MockYieldAdapter(usdg, address(floatingVault), 2000, admin);
         router = new AgentRouter(admin);
+        usdg.setMinter(address(fixedAdapter), true);
+        usdg.setMinter(address(floatingAdapter), true);
         vm.startPrank(admin);
         fixedVault.setAdapter(fixedAdapter);
         floatingVault.setAdapter(floatingAdapter);

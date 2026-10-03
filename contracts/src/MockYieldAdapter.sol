@@ -67,7 +67,7 @@ contract MockYieldAdapter is IYieldAdapter, Ownable {
         uint256 pending = _pending();
         _lastAccrual = block.timestamp;
         if (pending > 0) {
-            _asset.mint(address(this), pending);
+            _asset.mintYield(address(this), pending);
             _principal += pending;
         }
     }

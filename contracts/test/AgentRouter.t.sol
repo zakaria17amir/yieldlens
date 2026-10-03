@@ -263,11 +263,27 @@ contract AgentRouterTest is Fixture {
         assertEq(lastMove, 0);
     }
 
-    function test_firstMoveIgnoresCooldown() public {
+    function test_firstMoveIgnoresCooldownThenSecondWaits() public {
         _mintAndDeposit(alice, floatingVault, 100e6);
         _delegate(alice, 10_000, type(uint32).max);
         _agentMove(alice, 10e6);
-        vm.expectRevert();
+        uint64 availableAt = uint64(block.timestamp) + type(uint32).max;
+        vm.expectRevert(abi.encodeWithSelector(AgentRouter.CooldownActive.selector, availableAt));
         _agentMove(alice, 10e6);
+    }
+
+    function test_moveForRejectsUnknownVault() public {
+        vm.startPrank(agent);
+        vm.expectRevert(abi.encodeWithSelector(AgentRouter.NotAllowedVault.selector, address(0xdead)));
+        router.moveFor(alice, address(0xdead), address(fixedVault), 1e6, HASH);
+        vm.expectRevert(abi.encodeWithSelector(AgentRouter.NotAllowedVault.selector, address(0xdead)));
+        router.moveFor(alice, address(floatingVault), address(0xdead), 1e6, HASH);
+        vm.stopPrank();
+    }
+
+    function test_moveForRejectsSameVault() public {
+        vm.prank(agent);
+        vm.expectRevert(AgentRouter.SameVault.selector);
+        router.moveFor(alice, address(fixedVault), address(fixedVault), 1e6, HASH);
     }
 }

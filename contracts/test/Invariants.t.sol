@@ -15,8 +15,9 @@ contract RouterHandler is Test {
     address public immutable agent;
     address[] public actors;
 
-    uint256 public moveCount;
-    uint256 public depositCount;
+    uint256 public agentMoveCount;
+    mapping(address => uint256) public moves;
+    mapping(address => uint256) public deposits;
     mapping(address => uint256) public deposited;
     mapping(address => uint256) public withdrawn;
 
@@ -65,7 +66,7 @@ contract RouterHandler is Test {
         vm.prank(user);
         _vault(vaultSeed).deposit(amount, user);
         deposited[user] += amount;
-        depositCount++;
+        deposits[user]++;
     }
 
     function redeem(uint256 actorSeed, uint256 vaultSeed, uint256 shares) external {
@@ -86,7 +87,7 @@ contract RouterHandler is Test {
         amount = bound(amount, 1, max);
         vm.prank(user);
         router.moveSelf(address(from), address(_other(from)), amount, bytes32(0));
-        moveCount++;
+        moves[user]++;
     }
 
     function agentMove(uint256 actorSeed, uint256 vaultSeed, uint256 amount) external {
@@ -99,7 +100,8 @@ contract RouterHandler is Test {
         amount = bound(amount, 1, max);
         vm.prank(agent);
         router.moveFor(user, address(from), address(_other(from)), amount, bytes32(0));
-        moveCount++;
+        moves[user]++;
+        agentMoveCount++;
     }
 
     function warp(uint256 secs) external {
@@ -112,6 +114,10 @@ contract InvariantsTest is Fixture {
 
     function setUp() public override {
         super.setUp();
+        vm.startPrank(admin);
+        fixedAdapter.setAprBps(0);
+        floatingAdapter.setAprBps(0);
+        vm.stopPrank();
         address[] memory actors = new address[](2);
         actors[0] = alice;
         actors[1] = bob;
@@ -134,7 +140,7 @@ contract InvariantsTest is Fixture {
         for (uint256 i; i < users.length; i++) {
             address u = users[i];
             assertGe(
-                router.userTotalAssets(u) + handler.withdrawn(u) + handler.moveCount() + handler.depositCount(),
+                router.userTotalAssets(u) + handler.withdrawn(u) + 2 * handler.moves(u) + handler.deposits(u),
                 handler.deposited(u)
             );
         }
@@ -142,5 +148,23 @@ contract InvariantsTest is Fixture {
 
     function invariant_routerHoldsNothing() public view {
         assertEq(usdg.balanceOf(address(router)), 0);
+    }
+
+    function test_handlerExercisesAgentMoves() public {
+        handler.deposit(0, 1, 50e6);
+        handler.deposit(1, 0, 50e6);
+        for (uint256 i; i < 200; i++) {
+            uint256 seed = uint256(keccak256(abi.encode(i)));
+            uint256 a = seed >> 8;
+            uint256 v = seed >> 16;
+            uint256 amount = seed >> 24;
+            uint256 action = seed % 5;
+            if (action == 0) handler.deposit(a, v, amount);
+            else if (action == 1) handler.redeem(a, v, amount);
+            else if (action == 2) handler.moveSelf(a, v, amount);
+            else if (action == 3) handler.agentMove(a, v, amount);
+            else handler.warp(amount);
+        }
+        assertGt(handler.agentMoveCount(), 0);
     }
 }
