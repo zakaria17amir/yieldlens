@@ -410,7 +410,7 @@
         "internalType": "address"
       },
       {
-        "name": "owner",
+        "name": "owner_",
         "type": "address",
         "internalType": "address"
       }
@@ -564,7 +564,7 @@
         "internalType": "address"
       },
       {
-        "name": "owner",
+        "name": "owner_",
         "type": "address",
         "internalType": "address"
       }
@@ -577,6 +577,19 @@
       }
     ],
     "stateMutability": "nonpayable"
+  },
+  {
+    "type": "event",
+    "name": "AdapterSet",
+    "inputs": [
+      {
+        "name": "adapter",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
   },
   {
     "type": "event",
@@ -728,6 +741,11 @@
   {
     "type": "error",
     "name": "AdapterNotSet",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "AdapterVaultMismatch",
     "inputs": []
   },
   {
@@ -921,6 +939,11 @@
         "internalType": "address"
       }
     ]
+  },
+  {
+    "type": "error",
+    "name": "ReentrancyGuardReentrantCall",
+    "inputs": []
   },
   {
     "type": "error",

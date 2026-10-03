@@ -25,6 +25,8 @@ contract AgentRouter is AccessControl, Pausable, ReentrancyGuard {
     error InvalidBps();
     error ZeroAssets();
     error ZeroAddress();
+    error VaultsAlreadySet();
+    error ZeroShares();
     error AssetMismatch();
     error PolicyDisabled(address user);
     error CooldownActive(uint64 availableAt);
@@ -46,14 +48,17 @@ contract AgentRouter is AccessControl, Pausable, ReentrancyGuard {
     mapping(address => Policy) public policies;
 
     constructor(address admin) {
+        if (admin == address(0)) revert ZeroAddress();
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
     }
 
-    /// @notice Admin may call this more than once to migrate to a new vault pair.
-    /// @dev The admin is trusted: a malicious vault pair could misdirect the router's approvals and the
-    /// `received` amounts it moves, so the admin should be a multisig in production.
+    /// @notice Sets the vault pair once. To migrate, deploy a new router.
+    /// @dev The admin is trusted (pause, agent role, one-time vault pair) but cannot re-point an existing
+    /// router; use a multisig as admin in production.
     function setVaults(address fixedVault_, address floatingVault_) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (fixedVault != address(0)) revert VaultsAlreadySet();
         if (fixedVault_ == address(0) || floatingVault_ == address(0)) revert ZeroAddress();
+        if (fixedVault_ == floatingVault_) revert SameVault();
         if (IERC4626(fixedVault_).asset() != IERC4626(floatingVault_).asset()) revert AssetMismatch();
         fixedVault = fixedVault_;
         floatingVault = floatingVault_;
@@ -107,8 +112,8 @@ contract AgentRouter is AccessControl, Pausable, ReentrancyGuard {
         uint256 cap = userTotalAssets(user) * p.maxMoveBps / 10_000;
         if (assets > cap) revert ExceedsCap(assets, cap);
 
-        _move(user, fromVault, toVault, assets, reportHash, true);
         policies[user].lastMove = uint64(block.timestamp);
+        _move(user, fromVault, toVault, assets, reportHash, true);
     }
 
     function _isVault(address vault) private view returns (bool) {
@@ -132,7 +137,7 @@ contract AgentRouter is AccessControl, Pausable, ReentrancyGuard {
         if (received == 0) revert ZeroAssets();
 
         token.forceApprove(to, received);
-        IERC4626(to).deposit(received, user);
+        if (IERC4626(to).deposit(received, user) == 0) revert ZeroShares();
 
         emit Moved(user, from, to, received, reportHash, byAgent);
     }

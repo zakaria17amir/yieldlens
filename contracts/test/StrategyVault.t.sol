@@ -45,6 +45,22 @@ contract StrategyVaultTest is Fixture {
         v.setAdapter(other);
     }
 
+    function test_setAdapterRejectsForeignVault() public {
+        StrategyVault v = new StrategyVault(usdg, "X", "X", admin);
+        vm.prank(admin);
+        vm.expectRevert(StrategyVault.AdapterVaultMismatch.selector);
+        v.setAdapter(fixedAdapter);
+    }
+
+    function test_setAdapterEmitsEvent() public {
+        StrategyVault v = new StrategyVault(usdg, "X", "X", admin);
+        MockYieldAdapter a = new MockYieldAdapter(usdg, address(v), 0, admin);
+        vm.expectEmit(true, false, false, false, address(v));
+        emit StrategyVault.AdapterSet(address(a));
+        vm.prank(admin);
+        v.setAdapter(a);
+    }
+
     function test_depositBeforeAdapterReverts() public {
         StrategyVault v = new StrategyVault(usdg, "X", "X", admin);
         usdg.mint(alice, 1e6);

@@ -691,12 +691,22 @@
   },
   {
     "type": "error",
+    "name": "VaultsAlreadySet",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "ZeroAddress",
     "inputs": []
   },
   {
     "type": "error",
     "name": "ZeroAssets",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ZeroShares",
     "inputs": []
   }
 ]

@@ -6,7 +6,17 @@ import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol"
 import {Fixture} from "./helpers/Fixture.sol";
 import {AgentRouter} from "../src/AgentRouter.sol";
 import {StrategyVault} from "../src/StrategyVault.sol";
+import {MockYieldAdapter} from "../src/MockYieldAdapter.sol";
 import {MockUSDG} from "../src/MockUSDG.sol";
+
+contract ZeroShareVault is StrategyVault {
+    constructor(MockUSDG asset_, address owner_) StrategyVault(asset_, "Z", "Z", owner_) {}
+
+    function deposit(uint256 assets, address receiver) public override returns (uint256) {
+        super.deposit(assets, receiver);
+        return 0;
+    }
+}
 
 contract AgentRouterTest is Fixture {
     event PolicySet(address indexed user, bool enabled, uint16 maxMoveBps, uint32 cooldown);
@@ -106,13 +116,48 @@ contract AgentRouterTest is Fixture {
     }
 
     function test_setVaultsRejectsZeroAndMismatch() public {
+        AgentRouter fresh = new AgentRouter(admin);
         StrategyVault other = new StrategyVault(new MockUSDG(), "X", "X", admin);
         vm.startPrank(admin);
         vm.expectRevert(AgentRouter.ZeroAddress.selector);
-        router.setVaults(address(0), address(floatingVault));
+        fresh.setVaults(address(0), address(floatingVault));
         vm.expectRevert(AgentRouter.AssetMismatch.selector);
-        router.setVaults(address(fixedVault), address(other));
+        fresh.setVaults(address(fixedVault), address(other));
         vm.stopPrank();
+    }
+
+    function test_setVaultsOnlyOnce() public {
+        vm.prank(admin);
+        vm.expectRevert(AgentRouter.VaultsAlreadySet.selector);
+        router.setVaults(address(floatingVault), address(fixedVault));
+    }
+
+    function test_setVaultsRejectsIdenticalVaults() public {
+        AgentRouter fresh = new AgentRouter(admin);
+        vm.prank(admin);
+        vm.expectRevert(AgentRouter.SameVault.selector);
+        fresh.setVaults(address(fixedVault), address(fixedVault));
+    }
+
+    function test_constructorRejectsZeroAdmin() public {
+        vm.expectRevert(AgentRouter.ZeroAddress.selector);
+        new AgentRouter(address(0));
+    }
+
+    function test_moveRevertsWhenDestinationMintsZeroShares() public {
+        ZeroShareVault zero = new ZeroShareVault(usdg, admin);
+        MockYieldAdapter zeroAdapter = new MockYieldAdapter(usdg, address(zero), 0, admin);
+        vm.prank(admin);
+        zero.setAdapter(zeroAdapter);
+        AgentRouter fresh = new AgentRouter(admin);
+        vm.prank(admin);
+        fresh.setVaults(address(zero), address(floatingVault));
+        _mintAndDeposit(alice, floatingVault, 100e6);
+        vm.prank(alice);
+        floatingVault.approve(address(fresh), type(uint256).max);
+        vm.prank(alice);
+        vm.expectRevert(AgentRouter.ZeroShares.selector);
+        fresh.moveSelf(address(floatingVault), address(zero), 10e6, HASH);
     }
 
     function _delegate(address user, uint16 bps, uint32 cooldown) internal {

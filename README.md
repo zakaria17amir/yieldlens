@@ -28,6 +28,8 @@ forge script script/Deploy.s.sol --rpc-url arbitrum_sepolia --broadcast \
 
 The script writes `contracts/deployments/arbitrum-sepolia.json` (commit it). ABIs live in `contracts/deployments/abi/`; `arbitrum-sepolia.example.json` shows the shape with zero addresses.
 
+**Trust model.** The router admin is trusted: it can pause, grant and revoke the agent role, and set the vault pair exactly once (migration means deploying a new router). Use a multisig as admin in production. The agent key can only move opted-in users between the two configured vaults, within each user's cap and cooldown, and the user is always the receiver. `MockUSDG` and `MockYieldAdapter` are testnet-only: the mock token is an unrestricted faucet with a per-call mint cap.
+
 | Contract | Address |
 | --- | --- |
 | MockUSDG | pending deploy |

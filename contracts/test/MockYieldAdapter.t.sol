@@ -51,6 +51,21 @@ contract MockYieldAdapterTest is Test {
         assertEq(adapter.principal(), 0);
     }
 
+    function test_pendingDoesNotOverflowOnHugePrincipal() public {
+        vm.store(address(adapter), bytes32(uint256(2)), bytes32(uint256(1e70)));
+        vm.prank(owner);
+        adapter.setAprBps(10_000);
+        vm.warp(block.timestamp + 3650 days);
+        assertGt(adapter.totalAssets(), 1e70);
+    }
+
+    function test_setAprBpsEmits() public {
+        vm.expectEmit(false, false, false, true, address(adapter));
+        emit MockYieldAdapter.AprSet(500);
+        vm.prank(owner);
+        adapter.setAprBps(500);
+    }
+
     function test_setAprBpsRejectsOver10000() public {
         vm.startPrank(owner);
         vm.expectRevert(MockYieldAdapter.InvalidBps.selector);

@@ -2,6 +2,7 @@
 pragma solidity 0.8.24;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IYieldAdapter} from "./interfaces/IYieldAdapter.sol";
 import {MockUSDG} from "./MockUSDG.sol";
@@ -11,6 +12,8 @@ contract MockYieldAdapter is IYieldAdapter, Ownable {
 
     error OnlyVault();
     error InvalidBps();
+
+    event AprSet(uint256 aprBps);
 
     uint256 private constant BPS = 10_000;
 
@@ -53,6 +56,7 @@ contract MockYieldAdapter is IYieldAdapter, Ownable {
         if (newAprBps > BPS) revert InvalidBps();
         accrue();
         _aprBps = newAprBps;
+        emit AprSet(newAprBps);
     }
 
     function totalAssets() public view returns (uint256) {
@@ -81,6 +85,6 @@ contract MockYieldAdapter is IYieldAdapter, Ownable {
     }
 
     function _pending() private view returns (uint256) {
-        return _principal * _aprBps * (block.timestamp - _lastAccrual) / (BPS * 365 days);
+        return Math.mulDiv(_principal, _aprBps * (block.timestamp - _lastAccrual), BPS * 365 days);
     }
 }

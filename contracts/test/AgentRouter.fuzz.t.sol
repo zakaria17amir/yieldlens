@@ -7,7 +7,7 @@ import {AgentRouter} from "../src/AgentRouter.sol";
 
 contract AgentRouterFuzzTest is Fixture {
     function testFuzz_neverExceedsCap(uint96 balance, uint16 bps, uint96 assets) public {
-        uint256 bal = bound(balance, 1e6, 1e15);
+        uint256 bal = bound(balance, 1e6, 1e13);
         uint16 capBps = uint16(bound(bps, 0, 10_000));
         uint256 amount = bound(assets, 1, bal);
         _mintAndDeposit(alice, floatingVault, bal);
