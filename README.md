@@ -41,3 +41,16 @@ The script writes `contracts/deployments/arbitrum-sepolia.json` (commit it). ABI
 | Fixed adapter | pending deploy |
 | Floating adapter | pending deploy |
 | AgentRouter | pending deploy |
+
+## Does the desk beat always-fixed / always-floating?
+
+![Replay: desk vs always fixed vs always floating](docs/replay.png)
+
+```bash
+cd agents
+uv run python replay/replay.py --window 90 --cadence 1d --start-split 5000   # rule-only, no LLM
+```
+
+Over the recorded 90 days the desk ends at **101.40**, always-fixed at **101.51** and always-floating at **101.26** (start 100, 50/50 split, `MIN_CHANGE_BPS` gate of 500). So the desk landed between the two baselines: in this window fixed beat floating, and the desk, which started half floating and moved toward fixed, did not beat always-fixed.
+
+Read this with care: the replay runs the deterministic band rule (no LLM), on the recorded Pendle history of the last expired GM market, with the fixed sleeve earning the implied APY locked at entry and the floating sleeve earning the daily underlying APY. Trading costs, slippage and gas are not modelled, and on Sepolia the vault yield is a mock accrual, not market yield. It demonstrates the mechanics, not an edge.
