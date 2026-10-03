@@ -1,0 +1,267 @@
+{
+ "mode": "cached",
+ "cases": 23,
+ "in_band_rate": 1.0,
+ "veto_accuracy": 1.0,
+ "citation_validity_rate": 1.0,
+ "mean_tokens": 0,
+ "mean_latency_s": 0.017446726088604446,
+ "recorded_with": [
+  "rule"
+ ],
+ "rows": [
+  {
+   "name": "expired_fallback",
+   "target_fixed_bps": 0,
+   "vetoed": false,
+   "expect_veto": false,
+   "in_band": true,
+   "citations_valid": 4,
+   "citations_total": 4,
+   "latency_s": 0.02996690000873059,
+   "recorded_with": "rule"
+  },
+  {
+   "name": "expiring_market",
+   "target_fixed_bps": 0,
+   "vetoed": false,
+   "expect_veto": false,
+   "in_band": true,
+   "citations_valid": 4,
+   "citations_total": 4,
+   "latency_s": 0.016710399999283254,
+   "recorded_with": "rule"
+  },
+  {
+   "name": "stale_gmx",
+   "target_fixed_bps": 8500,
+   "vetoed": true,
+   "expect_veto": true,
+   "in_band": true,
+   "citations_valid": 4,
+   "citations_total": 4,
+   "latency_s": 0.0165804999996908,
+   "recorded_with": "rule"
+  },
+  {
+   "name": "window_00",
+   "target_fixed_bps": 8500,
+   "vetoed": false,
+   "expect_veto": false,
+   "in_band": true,
+   "citations_valid": 4,
+   "citations_total": 4,
+   "latency_s": 0.017184299998916686,
+   "recorded_with": "rule"
+  },
+  {
+   "name": "window_01",
+   "target_fixed_bps": 8500,
+   "vetoed": false,
+   "expect_veto": false,
+   "in_band": true,
+   "citations_valid": 4,
+   "citations_total": 4,
+   "latency_s": 0.01793309999629855,
+   "recorded_with": "rule"
+  },
+  {
+   "name": "window_02",
+   "target_fixed_bps": 8500,
+   "vetoed": false,
+   "expect_veto": false,
+   "in_band": true,
+   "citations_valid": 4,
+   "citations_total": 4,
+   "latency_s": 0.01664570000139065,
+   "recorded_with": "rule"
+  },
+  {
+   "name": "window_03",
+   "target_fixed_bps": 8500,
+   "vetoed": false,
+   "expect_veto": false,
+   "in_band": true,
+   "citations_valid": 4,
+   "citations_total": 4,
+   "latency_s": 0.01548719999846071,
+   "recorded_with": "rule"
+  },
+  {
+   "name": "window_04",
+   "target_fixed_bps": 8500,
+   "vetoed": false,
+   "expect_veto": false,
+   "in_band": true,
+   "citations_valid": 4,
+   "citations_total": 4,
+   "latency_s": 0.01652740000281483,
+   "recorded_with": "rule"
+  },
+  {
+   "name": "window_05",
+   "target_fixed_bps": 8500,
+   "vetoed": false,
+   "expect_veto": false,
+   "in_band": true,
+   "citations_valid": 4,
+   "citations_total": 4,
+   "latency_s": 0.015901800012215972,
+   "recorded_with": "rule"
+  },
+  {
+   "name": "window_06",
+   "target_fixed_bps": 8500,
+   "vetoed": false,
+   "expect_veto": false,
+   "in_band": true,
+   "citations_valid": 4,
+   "citations_total": 4,
+   "latency_s": 0.016483900020830333,
+   "recorded_with": "rule"
+  },
+  {
+   "name": "window_07",
+   "target_fixed_bps": 8500,
+   "vetoed": false,
+   "expect_veto": false,
+   "in_band": true,
+   "citations_valid": 4,
+   "citations_total": 4,
+   "latency_s": 0.017198799992911518,
+   "recorded_with": "rule"
+  },
+  {
+   "name": "window_08",
+   "target_fixed_bps": 8500,
+   "vetoed": false,
+   "expect_veto": false,
+   "in_band": true,
+   "citations_valid": 4,
+   "citations_total": 4,
+   "latency_s": 0.018143199995392933,
+   "recorded_with": "rule"
+  },
+  {
+   "name": "window_09",
+   "target_fixed_bps": 8500,
+   "vetoed": false,
+   "expect_veto": false,
+   "in_band": true,
+   "citations_valid": 4,
+   "citations_total": 4,
+   "latency_s": 0.01637629998731427,
+   "recorded_with": "rule"
+  },
+  {
+   "name": "window_10",
+   "target_fixed_bps": 8500,
+   "vetoed": false,
+   "expect_veto": false,
+   "in_band": true,
+   "citations_valid": 4,
+   "citations_total": 4,
+   "latency_s": 0.017199399997480214,
+   "recorded_with": "rule"
+  },
+  {
+   "name": "window_11",
+   "target_fixed_bps": 8500,
+   "vetoed": false,
+   "expect_veto": false,
+   "in_band": true,
+   "citations_valid": 4,
+   "citations_total": 4,
+   "latency_s": 0.017450900020776317,
+   "recorded_with": "rule"
+  },
+  {
+   "name": "window_12",
+   "target_fixed_bps": 8500,
+   "vetoed": false,
+   "expect_veto": false,
+   "in_band": true,
+   "citations_valid": 4,
+   "citations_total": 4,
+   "latency_s": 0.01713789999485016,
+   "recorded_with": "rule"
+  },
+  {
+   "name": "window_13",
+   "target_fixed_bps": 8500,
+   "vetoed": false,
+   "expect_veto": false,
+   "in_band": true,
+   "citations_valid": 4,
+   "citations_total": 4,
+   "latency_s": 0.017483300005551428,
+   "recorded_with": "rule"
+  },
+  {
+   "name": "window_14",
+   "target_fixed_bps": 8500,
+   "vetoed": false,
+   "expect_veto": false,
+   "in_band": true,
+   "citations_valid": 4,
+   "citations_total": 4,
+   "latency_s": 0.015981200005626306,
+   "recorded_with": "rule"
+  },
+  {
+   "name": "window_15",
+   "target_fixed_bps": 8500,
+   "vetoed": false,
+   "expect_veto": false,
+   "in_band": true,
+   "citations_valid": 4,
+   "citations_total": 4,
+   "latency_s": 0.017218199995113537,
+   "recorded_with": "rule"
+  },
+  {
+   "name": "window_16",
+   "target_fixed_bps": 8500,
+   "vetoed": false,
+   "expect_veto": false,
+   "in_band": true,
+   "citations_valid": 4,
+   "citations_total": 4,
+   "latency_s": 0.016290700004901737,
+   "recorded_with": "rule"
+  },
+  {
+   "name": "window_17",
+   "target_fixed_bps": 8500,
+   "vetoed": false,
+   "expect_veto": false,
+   "in_band": true,
+   "citations_valid": 4,
+   "citations_total": 4,
+   "latency_s": 0.016731099982280284,
+   "recorded_with": "rule"
+  },
+  {
+   "name": "window_18",
+   "target_fixed_bps": 8500,
+   "vetoed": false,
+   "expect_veto": false,
+   "in_band": true,
+   "citations_valid": 4,
+   "citations_total": 4,
+   "latency_s": 0.017751400009728968,
+   "recorded_with": "rule"
+  },
+  {
+   "name": "window_19",
+   "target_fixed_bps": 8500,
+   "vetoed": false,
+   "expect_veto": false,
+   "in_band": true,
+   "citations_valid": 4,
+   "citations_total": 4,
+   "latency_s": 0.016891100007342175,
+   "recorded_with": "rule"
+  }
+ ]
+}

@@ -1,0 +1,186 @@
+{
+ "name": "window_03",
+ "rule": "pct_days_float_beat_fixed >= 60 -> [0, 3000]; <= 40 -> [7000, 10000]; else [3000, 7000]",
+ "now": "2025-12-08T00:00:00+00:00",
+ "gmx": {
+  "market": "ETH/USD [ETH-ETH]",
+  "current_apr_bps": 371,
+  "apr_by_period": {
+   "1d": 371,
+   "7d": 371,
+   "30d": 371,
+   "90d": 371
+  },
+  "fetched_at": "2025-12-08T00:00:00Z",
+  "stale": false
+ },
+ "pendle": {
+  "market": "gmETH (WETH-WETH)",
+  "address": "0x358925d171380e05b12036a2bf7051704cb85fab",
+  "implied_apy_bps": 497,
+  "underlying_apy_bps": 371,
+  "expiry": "2026-04-07T00:00:00Z",
+  "liquidity_usd": 1000000.0,
+  "fetched_at": "2025-12-08T00:00:00Z",
+  "stale": false,
+  "expired_fallback": false,
+  "simulated": false,
+  "history": [
+   {
+    "ts": "2025-11-09T00:00:00Z",
+    "implied_apy_bps": 608,
+    "underlying_apy_bps": 461
+   },
+   {
+    "ts": "2025-11-10T00:00:00Z",
+    "implied_apy_bps": 608,
+    "underlying_apy_bps": 351
+   },
+   {
+    "ts": "2025-11-11T00:00:00Z",
+    "implied_apy_bps": 635,
+    "underlying_apy_bps": 292
+   },
+   {
+    "ts": "2025-11-12T00:00:00Z",
+    "implied_apy_bps": 635,
+    "underlying_apy_bps": 298
+   },
+   {
+    "ts": "2025-11-13T00:00:00Z",
+    "implied_apy_bps": 512,
+    "underlying_apy_bps": 290
+   },
+   {
+    "ts": "2025-11-14T00:00:00Z",
+    "implied_apy_bps": 515,
+    "underlying_apy_bps": 439
+   },
+   {
+    "ts": "2025-11-15T00:00:00Z",
+    "implied_apy_bps": 515,
+    "underlying_apy_bps": 549
+   },
+   {
+    "ts": "2025-11-16T00:00:00Z",
+    "implied_apy_bps": 515,
+    "underlying_apy_bps": 1196
+   },
+   {
+    "ts": "2025-11-17T00:00:00Z",
+    "implied_apy_bps": 520,
+    "underlying_apy_bps": 1206
+   },
+   {
+    "ts": "2025-11-18T00:00:00Z",
+    "implied_apy_bps": 520,
+    "underlying_apy_bps": 1143
+   },
+   {
+    "ts": "2025-11-19T00:00:00Z",
+    "implied_apy_bps": 520,
+    "underlying_apy_bps": 1147
+   },
+   {
+    "ts": "2025-11-20T00:00:00Z",
+    "implied_apy_bps": 520,
+    "underlying_apy_bps": 1135
+   },
+   {
+    "ts": "2025-11-21T00:00:00Z",
+    "implied_apy_bps": 520,
+    "underlying_apy_bps": 995
+   },
+   {
+    "ts": "2025-11-22T00:00:00Z",
+    "implied_apy_bps": 520,
+    "underlying_apy_bps": 862
+   },
+   {
+    "ts": "2025-11-23T00:00:00Z",
+    "implied_apy_bps": 520,
+    "underlying_apy_bps": 240
+   },
+   {
+    "ts": "2025-11-24T00:00:00Z",
+    "implied_apy_bps": 520,
+    "underlying_apy_bps": 278
+   },
+   {
+    "ts": "2025-11-25T00:00:00Z",
+    "implied_apy_bps": 520,
+    "underlying_apy_bps": 287
+   },
+   {
+    "ts": "2025-11-26T00:00:00Z",
+    "implied_apy_bps": 520,
+    "underlying_apy_bps": 257
+   },
+   {
+    "ts": "2025-11-27T00:00:00Z",
+    "implied_apy_bps": 517,
+    "underlying_apy_bps": 231
+   },
+   {
+    "ts": "2025-11-28T00:00:00Z",
+    "implied_apy_bps": 517,
+    "underlying_apy_bps": 189
+   },
+   {
+    "ts": "2025-11-29T00:00:00Z",
+    "implied_apy_bps": 517,
+    "underlying_apy_bps": 210
+   },
+   {
+    "ts": "2025-11-30T00:00:00Z",
+    "implied_apy_bps": 517,
+    "underlying_apy_bps": 187
+   },
+   {
+    "ts": "2025-12-01T00:00:00Z",
+    "implied_apy_bps": 515,
+    "underlying_apy_bps": 159
+   },
+   {
+    "ts": "2025-12-02T00:00:00Z",
+    "implied_apy_bps": 515,
+    "underlying_apy_bps": 185
+   },
+   {
+    "ts": "2025-12-03T00:00:00Z",
+    "implied_apy_bps": 515,
+    "underlying_apy_bps": 249
+   },
+   {
+    "ts": "2025-12-04T00:00:00Z",
+    "implied_apy_bps": 515,
+    "underlying_apy_bps": 366
+   },
+   {
+    "ts": "2025-12-05T00:00:00Z",
+    "implied_apy_bps": 497,
+    "underlying_apy_bps": 397
+   },
+   {
+    "ts": "2025-12-06T00:00:00Z",
+    "implied_apy_bps": 497,
+    "underlying_apy_bps": 392
+   },
+   {
+    "ts": "2025-12-07T00:00:00Z",
+    "implied_apy_bps": 497,
+    "underlying_apy_bps": 401
+   },
+   {
+    "ts": "2025-12-08T00:00:00Z",
+    "implied_apy_bps": 497,
+    "underlying_apy_bps": 371
+   }
+  ]
+ },
+ "expected_band": [
+  7000,
+  10000
+ ],
+ "expect_veto": false
+}
