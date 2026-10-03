@@ -1,6 +1,7 @@
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import DeskPanel from "./components/DeskPanel";
 import PositionPanel from "./components/PositionPanel";
+import TrackRecordPanel from "./components/TrackRecordPanel";
 import { isDeployed } from "./contracts";
 import { activeChain } from "./wagmi";
 
@@ -22,10 +23,7 @@ export default function App() {
       <main>
         <PositionPanel />
         <DeskPanel />
-        <section className="panel">
-          <h2>Track record</h2>
-          <p className="muted">Fix-or-float performance appears here.</p>
-        </section>
+        <TrackRecordPanel />
       </main>
     </div>
   );

@@ -331,3 +331,11 @@ a {
   border-radius: 8px;
   margin-bottom: 14px;
 }
+
+.history {
+  margin-top: 14px;
+}
+
+.badge.muted-badge {
+  color: var(--muted);
+}

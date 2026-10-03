@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useReadContracts } from "wagmi";
 import { parseUnits } from "viem";
 import { abis, deployments, isDeployed } from "../contracts";
@@ -6,6 +7,7 @@ import { useTx } from "../useTx";
 import { useViewer } from "../viewer";
 import DelegationCard from "./DelegationCard";
 import type { PolicyView } from "./DelegationCard";
+import MoveHistory from "./MoveHistory";
 import VaultCard from "./VaultCard";
 
 const FAUCET_AMOUNT = parseUnits("1000", 6);
@@ -32,7 +34,11 @@ export default function PositionPanel() {
     ],
   });
 
-  const tx = useTx(() => void refetch());
+  const [version, setVersion] = useState(0);
+  const tx = useTx(() => {
+    void refetch();
+    setVersion((v) => v + 1);
+  });
   const canWrite = isDeployed && !readOnly && user !== undefined;
 
   const big = (i: number) => (data?.[i]?.result as bigint | undefined) ?? 0n;
@@ -115,6 +121,7 @@ export default function PositionPanel() {
             />
             <DelegationCard policy={policy} approved={approved} canWrite={canWrite} tx={tx} />
           </div>
+          {isDeployed && <MoveHistory user={user} refreshKey={version} />}
         </>
       )}
     </section>
